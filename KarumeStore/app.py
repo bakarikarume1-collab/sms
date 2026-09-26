@@ -41,9 +41,11 @@ database_path = os.path.join(
     "store.db"
 )
 
-# Convert Windows path to SQLite absolute URI
-database_uri = "sqlite:///" + database_path.replace("\\", "/")
 
+database_url = os.environ.get("DATABASE_URL")
+
+if not database_url:
+    database_url = "sqlite:///" + database_path.replace("\\", "/")
 
 # =========================================================
 # CONFIGURATION
