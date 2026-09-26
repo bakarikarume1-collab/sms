@@ -1,0 +1,728 @@
+{% extends "base.html" %}
+
+{% block title %}
+Cart | KarumeStore
+{% endblock %}
+
+{% block content %}
+
+<main class="page">
+
+
+<div class="page-heading">
+    <span class="eyebrow">SHOPPING CART</span>
+    <h1>Your Cart</h1>
+</div>
+
+<div id="cart-container">
+    <p class="loading">Loading cart...</p>
+</div>
+
+
+</main>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    loadCartPage
+);
+
+
+// =========================================================
+// LOAD CART
+// =========================================================
+
+async function loadCartPage() {
+
+    const container =
+        document.getElementById(
+            "cart-container"
+        );
+
+    try {
+
+        const data =
+            await apiRequest(
+                "/api/cart"
+            );
+
+
+        // =================================================
+        // LOGIN CHECK
+        // =================================================
+
+        if (!data?.success) {
+
+            container.innerHTML = `
+                <div
+                    class="empty-products"
+                    style="display:block"
+                >
+
+                    <h2>Please login</h2>
+
+                    <a
+                        class="primary-btn"
+                        href="/login"
+                    >
+                        Login
+                    </a>
+
+                </div>
+            `;
+
+            return;
+        }
+
+
+        // =================================================
+        // CART DATA
+        // =================================================
+
+        const cart =
+            data.cart;
+
+
+        // =================================================
+        // EMPTY CART
+        // =================================================
+
+        if (
+            !cart ||
+            !cart.items ||
+            !cart.items.length
+        ) {
+
+            container.innerHTML = `
+                <div
+                    class="empty-products"
+                    style="display:block"
+                >
+
+                    <h2>Your cart is empty</h2>
+
+                    <a
+                        class="primary-btn"
+                        href="/products"
+                    >
+                        Start Shopping
+                    </a>
+
+                </div>
+            `;
+
+            return;
+        }
+
+
+        // =================================================
+        // CHECK STOCK
+        // =================================================
+
+        let hasStockProblem = false;
+
+
+        cart.items.forEach(item => {
+
+            if (
+                !item.product ||
+                item.product.stock <= 0 ||
+                item.quantity >
+                item.product.stock
+            ) {
+
+                hasStockProblem = true;
+
+            }
+
+        });
+
+
+        // =================================================
+        // RENDER CART
+        // =================================================
+
+        container.innerHTML = `
+
+            <div class="cart-layout">
+
+
+                <!-- ========================================
+                     CART ITEMS
+                ========================================= -->
+
+                <div class="cart-items">
+
+                    ${cart.items.map(item => {
+
+                        const product =
+                            item.product;
+
+                        const stock =
+                            Number(
+                                product?.stock || 0
+                            );
+
+                        const quantity =
+                            Number(
+                                item.quantity || 0
+                            );
+
+
+                        const stockProblem =
+                            !product ||
+                            stock <= 0 ||
+                            quantity > stock;
+
+
+                        let stockMessage = "";
+
+
+                        if (!product) {
+
+                            stockMessage = `
+                                <p
+                                    style="
+                                        color:#dc2626;
+                                        font-weight:600;
+                                    "
+                                >
+                                    Product no longer available.
+                                </p>
+                            `;
+
+                        }
+
+                        else if (stock <= 0) {
+
+                            stockMessage = `
+                                <p
+                                    style="
+                                        color:#dc2626;
+                                        font-weight:600;
+                                    "
+                                >
+                                    Out of Stock
+                                </p>
+                            `;
+
+                        }
+
+                        else if (quantity > stock) {
+
+                            stockMessage = `
+                                <p
+                                    style="
+                                        color:#dc2626;
+                                        font-weight:600;
+                                    "
+                                >
+                                    Only ${stock} left.
+                                    Please reduce quantity.
+                                </p>
+                            `;
+
+                        }
+
+                        else if (stock <= 3) {
+
+                            stockMessage = `
+                                <p
+                                    style="
+                                        color:#d97706;
+                                        font-weight:600;
+                                    "
+                                >
+                                    Only ${stock} left
+                                </p>
+                            `;
+
+                        }
+
+                        else {
+
+                            stockMessage = `
+                                <p
+                                    style="
+                                        color:#16a34a;
+                                        font-weight:600;
+                                    "
+                                >
+                                    In Stock
+                                </p>
+                            `;
+
+                        }
+
+
+                        return `
+
+                            <div
+                                class="cart-item"
+                            >
+
+
+                                <!-- IMAGE -->
+
+                                <div
+                                    class="cart-item-image"
+                                >
+
+                                    ${
+                                        product?.image
+
+                                        ?
+
+                                        `
+                                        <img
+                                            src="${escapeAttribute(
+                                                product.image
+                                            )}"
+                                            alt="${escapeAttribute(
+                                                product.name
+                                            )}"
+                                        >
+                                        `
+
+                                        :
+
+                                        "🛍️"
+                                    }
+
+                                </div>
+
+
+                                <!-- PRODUCT INFO -->
+
+                                <div
+                                    class="cart-item-info"
+                                >
+
+                                    <h3>
+                                        ${escapeHtml(
+                                            product?.name ||
+                                            "Unavailable Product"
+                                        )}
+                                    </h3>
+
+
+                                    ${
+                                        product
+
+                                        ?
+
+                                        `
+                                        <p>
+                                            ${formatTZS(
+                                                item.unit_price
+                                            )}
+                                        </p>
+                                        `
+
+                                        :
+
+                                        ""
+                                    }
+
+
+                                    <!-- STOCK STATUS -->
+
+                                    ${stockMessage}
+
+
+                                    <!-- QUANTITY -->
+
+                                    <div
+                                        class="quantity-row"
+                                    >
+
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="${Math.max(
+                                                stock,
+                                                1
+                                            )}"
+                                            value="${quantity}"
+                                            ${
+                                                stock <= 0
+                                                ? "disabled"
+                                                : ""
+                                            }
+                                            onchange="
+                                                updateCartItem(
+                                                    ${item.id},
+                                                    this.value,
+                                                    ${stock}
+                                                )
+                                            "
+                                        >
+
+
+                                        <button
+                                            class="danger-btn"
+                                            onclick="
+                                                removeCartItem(
+                                                    ${item.id}
+                                                )
+                                            "
+                                        >
+                                            Remove
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- TOTAL -->
+
+                                <strong>
+
+                                    ${
+                                        product
+
+                                        ?
+
+                                        formatTZS(
+                                            item.total
+                                        )
+
+                                        :
+
+                                        "Unavailable"
+                                    }
+
+                                </strong>
+
+                            </div>
+
+                        `;
+
+                    }).join("")}
+
+                </div>
+
+
+                <!-- ========================================
+                     SUMMARY
+                ========================================= -->
+
+                <aside class="summary">
+
+                    <h2>
+                        Summary
+                    </h2>
+
+
+                    <p>
+
+                        <span>
+                            Subtotal
+                        </span>
+
+                        <strong>
+                            ${formatTZS(
+                                cart.subtotal
+                            )}
+                        </strong>
+
+                    </p>
+
+
+                    <p>
+
+                        <span>
+                            Delivery
+                        </span>
+
+                        <strong>
+                            Calculated at checkout
+                        </strong>
+
+                    </p>
+
+
+                    <hr>
+
+
+                    <p>
+
+                        <span>
+                            Total
+                        </span>
+
+                        <strong>
+                            ${formatTZS(
+                                cart.subtotal
+                            )}
+                        </strong>
+
+                    </p>
+
+
+                    ${
+                        hasStockProblem
+
+                        ?
+
+                        `
+                        <button
+                            class="primary-btn full"
+                            disabled
+                            style="
+                                opacity:.5;
+                                cursor:not-allowed;
+                            "
+                        >
+                            Fix Stock Issues
+                        </button>
+
+                        <p
+                            style="
+                                color:#dc2626;
+                                font-size:.9rem;
+                                margin-top:10px;
+                            "
+                        >
+                            Please update your cart
+                            quantities before checkout.
+                        </p>
+                        `
+
+                        :
+
+                        `
+                        <a
+                            class="primary-btn full"
+                            href="/checkout"
+                        >
+                            Proceed to Checkout
+                        </a>
+                        `
+                    }
+
+                </aside>
+
+            </div>
+
+        `;
+
+
+        // =================================================
+        // UPDATE CART BADGE
+        // =================================================
+
+        updateCartCount();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Failed to load cart:",
+            error
+        );
+
+        container.innerHTML = `
+
+            <div
+                class="empty-products"
+                style="display:block"
+            >
+
+                <h2>
+                    Unable to load cart
+                </h2>
+
+                <p>
+                    Please refresh the page
+                    and try again.
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+// =========================================================
+// UPDATE CART ITEM
+// =========================================================
+
+async function updateCartItem(
+    id,
+    quantity,
+    stock
+) {
+
+    quantity =
+        Number(quantity);
+
+
+    // =====================================================
+    // VALIDATE QUANTITY
+    // =====================================================
+
+    if (
+        !Number.isInteger(quantity) ||
+        quantity < 1
+    ) {
+
+        alert(
+            "Quantity must be at least 1."
+        );
+
+        loadCartPage();
+
+        return;
+    }
+
+
+    // =====================================================
+    // CHECK STOCK
+    // =====================================================
+
+    if (
+        stock <= 0
+    ) {
+
+        alert(
+            "This product is currently out of stock."
+        );
+
+        loadCartPage();
+
+        return;
+    }
+
+
+    if (
+        quantity > stock
+    ) {
+
+        alert(
+            `Only ${stock} unit(s) are available.`
+        );
+
+        loadCartPage();
+
+        return;
+    }
+
+
+    // =====================================================
+    // UPDATE BACKEND
+    // =====================================================
+
+    try {
+
+        const data =
+            await apiRequest(
+                `/api/cart/items/${id}`,
+                {
+                    method: "PUT",
+
+                    body: JSON.stringify({
+                        quantity:
+                            quantity
+                    })
+                }
+            );
+
+
+        if (!data?.success) {
+
+            alert(
+                data?.message ||
+                "Unable to update cart."
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        alert(
+            error.message ||
+            "Unable to update cart."
+        );
+
+    }
+
+
+    // =====================================================
+    // REFRESH
+    // =====================================================
+
+    await loadCartPage();
+
+    updateCartCount();
+
+}
+
+
+// =========================================================
+// REMOVE CART ITEM
+// =========================================================
+
+async function removeCartItem(
+    id
+) {
+
+    try {
+
+        const data =
+            await apiRequest(
+                `/api/cart/items/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        if (!data?.success) {
+
+            alert(
+                data?.message ||
+                "Unable to remove item."
+            );
+
+            return;
+        }
+
+    }
+
+    catch (error) {
+
+        alert(
+            error.message ||
+            "Unable to remove item."
+        );
+
+        return;
+    }
+
+
+    // =====================================================
+    // REFRESH CART
+    // =====================================================
+
+    await loadCartPage();
+
+    updateCartCount();
+
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}KarumeStore | Shop Everything{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <span class="eyebrow">WELCOME TO {{ store_name }} </span>
+        <h1>Everything You Need.<br><span>One Store.</span></h1>
+        <p>Shop clothes, shoes, electronics, fridges, bags, watches and home appliances from one convenient online store.</p>
+        <div class="hero-actions">
+            <a href="/products" class="primary-btn">Shop Now →</a>
+            <a href="#categories" class="secondary-btn">Explore Categories</a>
+        </div>
+    </div>
+    <div class="hero-visual">
+        <div class="hero-card">🛍️<strong>Quality Products</strong><small>Carefully selected</small></div>
+        <div class="hero-card second">🚚<strong>Easy Delivery</strong><small>To your location</small></div>
+    </div>
+</section>
+
+<section class="section" id="categories">
+    <div class="section-heading">
+        <div><span class="eyebrow">SHOP BY CATEGORY</span><h2>Find What You Need</h2></div>
+        <a href="/products">View All →</a>
+    </div>
+    <div class="categories-grid" id="categories-container">
+        <p class="loading">Loading categories...</p>
+    </div>
+</section>
+
+<section class="section muted" id="featured">
+    <div class="section-heading">
+        <div><span class="eyebrow">OUR PRODUCTS</span><h2>Featured Products</h2></div>
+        <a href="/products">View All →</a>
+    </div>
+    <div class="products-grid" id="featured-products">
+        <p class="loading">Loading products...</p>
+    </div>
+</section>
+
+<section class="benefits section">
+    <div class="benefit"><span>🔒</span><h3>Secure Account</h3><p>Your account is protected with hashed passwords.</p></div>
+    <div class="benefit"><span>🚚</span><h3>Easy Delivery</h3><p>Give us your delivery details at checkout.</p></div>
+    <div class="benefit"><span>📦</span><h3>Order Tracking</h3><p>Follow your order from pending to received.</p></div>
+</section>
+
+<section class="cta section">
+    <h2>Ready to shop?</h2>
+    <p>Create an account and start ordering your favorite products.</p>
+    <a href="/register" class="primary-btn">Create Account</a>
+</section>
+{% endblock %}

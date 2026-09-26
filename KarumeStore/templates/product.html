@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Product | KarumeStore{% endblock %}
+
+{% block content %}
+<main class="detail-page">
+    <div id="product-detail" class="detail-card"><p class="loading">Loading product...</p></div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PRODUCT_ID = {{ product_id }};
+
+document.addEventListener("DOMContentLoaded", loadProductDetail);
+
+async function loadProductDetail() {
+    const container = document.getElementById("product-detail");
+    const product = await apiRequest(`/api/products/${PRODUCT_ID}`);
+
+    if (!product || product.success === false) {
+        container.innerHTML = "<h2>Product not found.</h2>";
+        return;
+    }
+
+    const image = product.primary_image || "";
+    const finalPrice = product.discount_price ?? product.price;
+
+    container.innerHTML = `
+        <div class="detail-image">
+            ${image ? `<img src="${escapeAttribute(image)}" alt="${escapeAttribute(product.name)}">` : "<div class='product-placeholder'>🛍️</div>"}
+        </div>
+        <div class="detail-info">
+            <span class="eyebrow">${escapeHtml(product.category?.name || "General")}</span>
+            <h1>${escapeHtml(product.name)}</h1>
+            <div class="detail-price">${formatTZS(finalPrice)} ${product.discount_price ? `<del>${formatTZS(product.price)}</del>` : ""}</div>
+            <p>${escapeHtml(product.description || "Quality product from KarumeStore.")}</p>
+            <p><strong>${product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}</strong></p>
+            <div class="quantity-row">
+                <label>Quantity</label>
+                <input id="quantity" type="number" min="1" max="${product.stock}" value="1">
+            </div>
+            <button  class="primary-btn" onclick="addProductToCart()" ${product.stock <= 0 ? "disabled" : ""}>Add to Cart 🛒</button>
+            <a class="secondary-btn" href="/products">Continue Shopping</a>
+        </div>
+    `;
+}
+
+async function addProductToCart() {
+    const quantity = Number(document.getElementById("quantity").value);
+    const data = await apiRequest("/api/cart/items", {
+        method: "POST",
+        body: JSON.stringify({product_id: PRODUCT_ID, quantity})
+    });
+    if (data?.success) {
+        alert("Product added to cart.");
+        updateCartCount();
+    } else if (data?.message?.toLowerCase().includes("login")) {
+        location.href = "/login";
+    } else {
+        alert(data?.message || "Unable to add product.");
+    }
+}
+</script>
+{% endblock %}

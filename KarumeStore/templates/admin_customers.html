@@ -1,0 +1,1537 @@
+{% extends "base.html" %}
+
+{% block title %}Customers | KarumeStore{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* =========================================================
+   CUSTOMERS PAGE
+   ========================================================= */
+
+.admin-customers-page {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.customers-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.customers-page-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.customers-page-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #111827;
+    color: #fff;
+    font-size: 21px;
+}
+
+.customers-page-title h1 {
+    margin: 0;
+    font-size: 28px;
+    color: #111827;
+}
+
+.customers-page-title p {
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.customers-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.customers-header-btn {
+    min-height: 42px;
+    padding: 0 15px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #374151;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    transition: .2s ease;
+}
+
+.customers-header-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.customers-header-btn.primary {
+    background: #111827;
+    border-color: #111827;
+    color: #fff;
+}
+
+/* =========================================================
+   SUMMARY
+   ========================================================= */
+
+.customers-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.customer-summary-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.customer-summary-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    color: #111827;
+    flex-shrink: 0;
+}
+
+.customer-summary-card strong {
+    display: block;
+    color: #111827;
+    font-size: 23px;
+}
+
+.customer-summary-card span {
+    display: block;
+    margin-top: 4px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+/* =========================================================
+   FILTER PANEL
+   ========================================================= */
+
+.customers-filter-panel {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+
+.customers-filter-row {
+    display: grid;
+    grid-template-columns: 1fr 190px 130px;
+    gap: 12px;
+}
+
+.customer-search {
+    position: relative;
+}
+
+.customer-search i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
+.customer-search input,
+.customer-status-filter {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    outline: none;
+    background: #fff;
+    color: #111827;
+    font-size: 14px;
+}
+
+.customer-search input {
+    padding: 0 14px 0 42px;
+}
+
+.customer-status-filter {
+    padding: 0 12px;
+}
+
+.customer-search input:focus,
+.customer-status-filter:focus {
+    border-color: #111827;
+}
+
+.customers-results-info {
+    margin-top: 13px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+/* =========================================================
+   CUSTOMER TABLE
+   ========================================================= */
+
+.customers-table-wrapper {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 17px;
+    overflow: hidden;
+}
+
+.customers-table-scroll {
+    overflow-x: auto;
+}
+
+.customers-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+}
+
+.customers-table thead {
+    background: #f8fafc;
+}
+
+.customers-table th {
+    text-align: left;
+    padding: 14px 18px;
+    color: #6b7280;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.customers-table td {
+    padding: 16px 18px;
+    border-top: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.customers-table tbody tr {
+    transition: .15s ease;
+}
+
+.customers-table tbody tr:hover {
+    background: #fafafa;
+}
+
+/* =========================================================
+   CUSTOMER PROFILE
+   ========================================================= */
+
+.customer-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.customer-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #111827;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.customer-name {
+    color: #111827;
+    font-size: 14px;
+    font-weight: 750;
+}
+
+.customer-id {
+    color: #9ca3af;
+    font-size: 11px;
+    margin-top: 3px;
+}
+
+/* =========================================================
+   CONTACT
+   ========================================================= */
+
+.customer-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.customer-email {
+    color: #374151;
+    font-size: 13px;
+}
+
+.customer-whatsapp {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.customer-contact i {
+    width: 15px;
+    margin-right: 4px;
+    color: #9ca3af;
+}
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.customer-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-radius: 999px;
+    padding: 7px 10px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.customer-status::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+.customer-status.active {
+    color: #166534;
+    background: #dcfce7;
+}
+
+.customer-status.active::before {
+    background: #16a34a;
+}
+
+.customer-status.inactive {
+    color: #991b1b;
+    background: #fee2e2;
+}
+
+.customer-status.inactive::before {
+    background: #dc2626;
+}
+
+/* =========================================================
+   DATE
+   ========================================================= */
+
+.customer-date {
+    color: #4b5563;
+    font-size: 12px;
+}
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.customer-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.customer-action-btn {
+    width: 35px;
+    height: 35px;
+    border: 1px solid #e5e7eb;
+    border-radius: 9px;
+    background: #fff;
+    color: #374151;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    transition: .2s ease;
+}
+
+.customer-action-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.customer-action-btn.whatsapp {
+    color: #15803d;
+}
+
+.customer-action-btn.email {
+    color: #2563eb;
+}
+
+/* =========================================================
+   EMPTY / LOADING
+   ========================================================= */
+
+.customers-loading,
+.customers-empty,
+.customers-error {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 55px 25px;
+    text-align: center;
+}
+
+.customers-loading i,
+.customers-empty i,
+.customers-error i {
+    font-size: 34px;
+    color: #9ca3af;
+    margin-bottom: 12px;
+}
+
+.customers-empty h3,
+.customers-error h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 17px;
+}
+
+.customers-empty p,
+.customers-error p {
+    margin: 7px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.customers-error button {
+    margin-top: 16px;
+    border: none;
+    border-radius: 9px;
+    background: #111827;
+    color: #fff;
+    padding: 10px 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
+body.dark-mode .customers-page-title h1,
+body.dark-mode .customer-summary-card strong,
+body.dark-mode .customer-name,
+body.dark-mode .customer-email,
+body.dark-mode .customers-empty h3,
+body.dark-mode .customers-error h3 {
+    color: #f9fafb;
+}
+
+body.dark-mode .customers-page-title p,
+body.dark-mode .customer-summary-card span,
+body.dark-mode .customers-results-info,
+body.dark-mode .customer-whatsapp,
+body.dark-mode .customer-id,
+body.dark-mode .customer-date {
+    color: #9ca3af;
+}
+
+body.dark-mode .customer-summary-card,
+body.dark-mode .customers-filter-panel,
+body.dark-mode .customers-table-wrapper,
+body.dark-mode .customers-loading,
+body.dark-mode .customers-empty,
+body.dark-mode .customers-error {
+    background: #111827;
+    border-color: #1f2937;
+}
+
+body.dark-mode .customers-table thead {
+    background: #0f172a;
+}
+
+body.dark-mode .customers-table td {
+    border-color: #1f2937;
+}
+
+body.dark-mode .customers-table tbody tr:hover {
+    background: #172033;
+}
+
+body.dark-mode .customer-search input,
+body.dark-mode .customer-status-filter {
+    background: #0f172a;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+body.dark-mode .customers-header-btn {
+    background: #111827;
+    border-color: #374151;
+    color: #e5e7eb;
+}
+
+body.dark-mode .customer-action-btn {
+    background: #111827;
+    border-color: #374151;
+    color: #e5e7eb;
+}
+
+body.dark-mode .customer-summary-icon {
+    background: #1f2937;
+    color: #f9fafb;
+}
+
+body.dark-mode .customers-page-icon {
+    background: #f9fafb;
+    color: #111827;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .customers-page-header {
+        flex-direction: column;
+    }
+
+    .customers-header-actions {
+        width: 100%;
+    }
+
+    .customers-filter-row {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+@media (max-width: 650px) {
+
+    .admin-customers-page {
+        padding: 22px 14px 40px;
+    }
+
+    .customers-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .customers-page-title h1 {
+        font-size: 23px;
+    }
+
+    .customers-header-actions {
+        flex-direction: column;
+    }
+
+    .customers-header-btn {
+        width: 100%;
+    }
+
+}
+
+</style>
+
+
+<div class="admin-customers-page">
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <div class="customers-page-header">
+
+        <div class="customers-page-title">
+
+            <div class="customers-page-icon">
+                <i class="fas fa-users"></i>
+            </div>
+
+            <div>
+
+                <h1>
+                    Customers
+                </h1>
+
+                <p>
+                    Manage and view registered KarumeStore customers.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="customers-header-actions">
+
+            <a
+                href="/admin"
+                class="customers-header-btn"
+            >
+                <i class="fas fa-chart-pie"></i>
+                Dashboard
+            </a>
+
+            <a
+                href="/admin/orders"
+                class="customers-header-btn"
+            >
+                <i class="fas fa-box"></i>
+                Orders
+            </a>
+
+            <button
+                type="button"
+                class="customers-header-btn"
+                onclick="loadCustomers()"
+            >
+                <i class="fas fa-rotate"></i>
+                Refresh
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         SUMMARY
+         ===================================================== -->
+
+    <div class="customers-summary">
+
+        <div class="customer-summary-card">
+
+            <div class="customer-summary-icon">
+                <i class="fas fa-users"></i>
+            </div>
+
+            <div>
+
+                <strong id="totalCustomers">
+                    0
+                </strong>
+
+                <span>
+                    Total Customers
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="customer-summary-card">
+
+            <div class="customer-summary-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+
+            <div>
+
+                <strong id="activeCustomers">
+                    0
+                </strong>
+
+                <span>
+                    Active Customers
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="customer-summary-card">
+
+            <div class="customer-summary-icon">
+                <i class="fas fa-user-slash"></i>
+            </div>
+
+            <div>
+
+                <strong id="inactiveCustomers">
+                    0
+                </strong>
+
+                <span>
+                    Inactive Customers
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTER
+         ===================================================== -->
+
+    <div class="customers-filter-panel">
+
+        <div class="customers-filter-row">
+
+            <div class="customer-search">
+
+                <i class="fas fa-search"></i>
+
+                <input
+                    type="search"
+                    id="customerSearch"
+                    placeholder="Search by name, email or WhatsApp number..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <select
+                id="customerStatusFilter"
+                class="customer-status-filter"
+            >
+
+                <option value="">
+                    All customers
+                </option>
+
+                <option value="active">
+                    Active
+                </option>
+
+                <option value="inactive">
+                    Inactive
+                </option>
+
+            </select>
+
+
+            <button
+                type="button"
+                class="customers-header-btn"
+                onclick="clearCustomerFilters()"
+            >
+                <i class="fas fa-filter-circle-xmark"></i>
+                Clear
+            </button>
+
+        </div>
+
+
+        <div
+            class="customers-results-info"
+            id="customersResultsInfo"
+        >
+            Loading customers...
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TABLE
+         ===================================================== -->
+
+    <div id="customersContainer">
+
+        <div class="customers-loading">
+
+            <i class="fas fa-spinner fa-spin"></i>
+
+            <h3>
+                Loading customers...
+            </h3>
+
+            <p>
+                Please wait.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let allCustomers = [];
+
+
+/* =========================================================
+   ESCAPE
+   ========================================================= */
+
+function safeCustomerText(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return escapeHtml(
+        String(value)
+    );
+
+}
+
+
+/* =========================================================
+   DATE
+   ========================================================= */
+
+function formatCustomerDate(value) {
+
+    if (!value) {
+        return "—";
+    }
+
+    const date =
+        new Date(value);
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+        return value;
+    }
+
+    return date.toLocaleDateString(
+        "en-TZ",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
+
+}
+
+
+/* =========================================================
+   INITIAL
+   ========================================================= */
+
+function customerInitials(name) {
+
+    const text =
+        String(name || "")
+            .trim();
+
+    if (!text) {
+        return "U";
+    }
+
+    const parts =
+        text.split(/\s+/);
+
+    if (parts.length === 1) {
+
+        return parts[0]
+            .substring(0, 2)
+            .toUpperCase();
+
+    }
+
+    return (
+        parts[0][0] +
+        parts[1][0]
+    ).toUpperCase();
+
+}
+
+
+/* =========================================================
+   LOAD CUSTOMERS
+   ========================================================= */
+
+async function loadCustomers() {
+
+    const container =
+        document.getElementById(
+            "customersContainer"
+        );
+
+
+    container.innerHTML = `
+        <div class="customers-loading">
+
+            <i class="fas fa-spinner fa-spin"></i>
+
+            <h3>
+                Loading customers...
+            </h3>
+
+            <p>
+                Please wait.
+            </p>
+
+        </div>
+    `;
+
+
+    try {
+
+        const response =
+            await apiRequest(
+                "/api/admin/customers"
+            );
+
+
+        allCustomers =
+            Array.isArray(
+                response.customers
+            )
+                ? response.customers
+                : [];
+
+
+        updateCustomerSummary();
+
+        applyCustomerFilters();
+
+    } catch (error) {
+
+        console.error(
+            "Failed to load customers:",
+            error
+        );
+
+
+        container.innerHTML = `
+            <div class="customers-error">
+
+                <i class="fas fa-triangle-exclamation"></i>
+
+                <h3>
+                    Unable to load customers
+                </h3>
+
+                <p>
+                    ${safeCustomerText(
+                        error.message ||
+                        "Something went wrong."
+                    )}
+                </p>
+
+                <button
+                    type="button"
+                    onclick="loadCustomers()"
+                >
+                    Try Again
+                </button>
+
+            </div>
+        `;
+
+
+        document.getElementById(
+            "customersResultsInfo"
+        ).textContent =
+            "Unable to load customers.";
+
+    }
+
+}
+
+
+/* =========================================================
+   SUMMARY
+   ========================================================= */
+
+function updateCustomerSummary() {
+
+    const total =
+        allCustomers.length;
+
+
+    const active =
+        allCustomers.filter(
+            customer =>
+                customer.is_active === true
+        ).length;
+
+
+    const inactive =
+        allCustomers.filter(
+            customer =>
+                customer.is_active !== true
+        ).length;
+
+
+    document.getElementById(
+        "totalCustomers"
+    ).textContent = total;
+
+
+    document.getElementById(
+        "activeCustomers"
+    ).textContent = active;
+
+
+    document.getElementById(
+        "inactiveCustomers"
+    ).textContent = inactive;
+
+}
+
+
+/* =========================================================
+   FILTER
+   ========================================================= */
+
+function applyCustomerFilters() {
+
+    const search =
+        document.getElementById(
+            "customerSearch"
+        ).value
+        .trim()
+        .toLowerCase();
+
+
+    const status =
+        document.getElementById(
+            "customerStatusFilter"
+        ).value;
+
+
+    const filtered =
+        allCustomers.filter(
+            customer => {
+
+                const searchableText = [
+
+                    customer.name,
+
+                    customer.email,
+
+                    customer.whatsapp_number
+
+                ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+
+                const matchesSearch =
+                    !search ||
+                    searchableText.includes(
+                        search
+                    );
+
+
+                const matchesStatus =
+                    !status ||
+                    (
+                        status === "active" &&
+                        customer.is_active === true
+                    ) ||
+                    (
+                        status === "inactive" &&
+                        customer.is_active !== true
+                    );
+
+
+                return (
+                    matchesSearch &&
+                    matchesStatus
+                );
+
+            }
+        );
+
+
+    renderCustomers(
+        filtered
+    );
+
+
+    document.getElementById(
+        "customersResultsInfo"
+    ).textContent =
+        `Showing ${filtered.length} of ${allCustomers.length} customers`;
+
+}
+
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+
+function renderCustomers(
+    customers
+) {
+
+    const container =
+        document.getElementById(
+            "customersContainer"
+        );
+
+
+    if (!customers.length) {
+
+        container.innerHTML = `
+            <div class="customers-empty">
+
+                <i class="fas fa-user-group"></i>
+
+                <h3>
+                    No customers found
+                </h3>
+
+                <p>
+                    Try changing your search
+                    or status filter.
+                </p>
+
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML = `
+
+        <div class="customers-table-wrapper">
+
+            <div class="customers-table-scroll">
+
+                <table class="customers-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Customer
+                            </th>
+
+                            <th>
+                                Contact
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Registered
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${
+                            customers
+                                .map(
+                                    customer =>
+                                        renderCustomerRow(
+                                            customer
+                                        )
+                                )
+                                .join("")
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   CUSTOMER ROW
+   ========================================================= */
+
+function renderCustomerRow(
+    customer
+) {
+
+    const active =
+        customer.is_active === true;
+
+
+    const phone =
+        customer.whatsapp_number || "";
+
+
+    const email =
+        customer.email || "";
+
+
+    const whatsappUrl =
+        phone
+            ? `https://wa.me/${normalizeWhatsAppNumber(phone)}`
+            : "";
+
+
+    const emailUrl =
+        email
+            ? `mailto:${encodeURIComponent(email)}`
+            : "";
+
+
+    return `
+
+        <tr>
+
+            <!-- CUSTOMER -->
+
+            <td>
+
+                <div class="customer-profile">
+
+                    <div class="customer-avatar">
+                        ${safeCustomerText(
+                            customerInitials(
+                                customer.name
+                            )
+                        )}
+                    </div>
+
+                    <div>
+
+                        <div class="customer-name">
+
+                            ${safeCustomerText(
+                                customer.name ||
+                                "Unnamed customer"
+                            )}
+
+                        </div>
+
+                        <div class="customer-id">
+
+                            Customer #${safeCustomerText(
+                                customer.id
+                            )}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </td>
+
+
+            <!-- CONTACT -->
+
+            <td>
+
+                <div class="customer-contact">
+
+                    <div class="customer-email">
+
+                        <i class="far fa-envelope"></i>
+
+                        ${safeCustomerText(
+                            email ||
+                            "No email"
+                        )}
+
+                    </div>
+
+                    <div class="customer-whatsapp">
+
+                        <i class="fab fa-whatsapp"></i>
+
+                        ${safeCustomerText(
+                            phone ||
+                            "No WhatsApp number"
+                        )}
+
+                    </div>
+
+                </div>
+
+            </td>
+
+
+            <!-- STATUS -->
+
+            <td>
+
+                <span
+                    class="customer-status ${
+                        active
+                            ? "active"
+                            : "inactive"
+                    }"
+                >
+
+                    ${
+                        active
+                            ? "Active"
+                            : "Inactive"
+                    }
+
+                </span>
+
+            </td>
+
+
+            <!-- DATE -->
+
+            <td>
+
+                <div class="customer-date">
+
+                    ${formatCustomerDate(
+                        customer.created_at
+                    )}
+
+                </div>
+
+            </td>
+
+
+            <!-- ACTIONS -->
+
+            <td>
+
+                <div class="customer-actions">
+
+                    ${
+                        whatsappUrl
+                            ? `
+                                <a
+                                    href="${safeCustomerText(
+                                        whatsappUrl
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="customer-action-btn whatsapp"
+                                    title="Open WhatsApp"
+                                >
+                                    <i class="fab fa-whatsapp"></i>
+                                </a>
+                            `
+                            : ""
+                    }
+
+
+                    ${
+                        emailUrl
+                            ? `
+                                <a
+                                    href="${safeCustomerText(
+                                        emailUrl
+                                    )}"
+                                    class="customer-action-btn email"
+                                    title="Send Email"
+                                >
+                                    <i class="far fa-envelope"></i>
+                                </a>
+                            `
+                            : ""
+                    }
+
+
+                    ${
+                        phone
+                            ? `
+                                <a
+                                    href="tel:${safeCustomerText(
+                                        phone
+                                    )}"
+                                    class="customer-action-btn"
+                                    title="Call customer"
+                                >
+                                    <i class="fas fa-phone"></i>
+                                </a>
+                            `
+                            : ""
+                    }
+
+                </div>
+
+            </td>
+
+        </tr>
+
+    `;
+
+}
+
+
+/* =========================================================
+   NORMALIZE WHATSAPP NUMBER
+   ========================================================= */
+
+function normalizeWhatsAppNumber(
+    phone
+) {
+
+    let value =
+        String(phone || "")
+            .replace(
+                /[^0-9+]/g,
+                ""
+            );
+
+
+    /*
+     * Tanzania examples:
+     *
+     * 0743771438
+     * 255743771438
+     * +255743771438
+     */
+
+    if (
+        value.startsWith("+")
+    ) {
+
+        return value.substring(1);
+
+    }
+
+
+    if (
+        value.startsWith("255")
+    ) {
+
+        return value;
+
+    }
+
+
+    if (
+        value.startsWith("0") &&
+        value.length >= 9
+    ) {
+
+        return (
+            "255" +
+            value.substring(1)
+        );
+
+    }
+
+
+    return value;
+
+}
+
+
+/* =========================================================
+   CLEAR FILTERS
+   ========================================================= */
+
+function clearCustomerFilters() {
+
+    document.getElementById(
+        "customerSearch"
+    ).value = "";
+
+
+    document.getElementById(
+        "customerStatusFilter"
+    ).value = "";
+
+
+    applyCustomerFilters();
+
+}
+
+
+/* =========================================================
+   EVENTS
+   ========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        const search =
+            document.getElementById(
+                "customerSearch"
+            );
+
+
+        const status =
+            document.getElementById(
+                "customerStatusFilter"
+            );
+
+
+        if (search) {
+
+            search.addEventListener(
+                "input",
+                applyCustomerFilters
+            );
+
+        }
+
+
+        if (status) {
+
+            status.addEventListener(
+                "change",
+                applyCustomerFilters
+            );
+
+        }
+
+
+        loadCustomers();
+
+    }
+);
+
+</script>
+
+{% endblock %}

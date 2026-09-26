@@ -1,0 +1,359 @@
+
+{% extends "base.html" %}
+
+{% block title %}Register | KarumeStore{% endblock %}
+
+{% block content %}
+
+<main class="auth-page">
+
+    <div class="auth-card">
+
+        <span class="eyebrow">JOIN KARUMESTORE</span>
+
+        <h1>Create Account</h1>
+
+        <p>
+            Create your account and receive order updates on phone.
+        </p>
+
+
+        <!-- ================================
+             REGISTER FORM
+        ================================= -->
+
+        <form id="register-form">
+             <!-- MESSAGE -->
+            <p
+                id="form-message"
+                class="form-message"
+                role="alert"
+                aria-live="polite"
+            ></p>
+
+            <!-- NAME -->
+            <label>
+                Name
+
+                <input
+                    id="name"
+                    type="text"
+                    required
+                    autocomplete="name"
+                    placeholder="Enter your name"
+                >
+            </label>
+
+
+            <!-- EMAIL -->
+            <label>
+                Email
+
+                <input
+                    id="email"
+                    type="email"
+                    required
+                    autocomplete="email"
+                    placeholder="Enter your email"
+                >
+            </label>
+
+
+            <!-- WHATSAPP NUMBER -->
+            <label>
+                Phone Number
+
+                <input
+                    id="whatsapp_number"
+                    type="tel"
+                    required
+                    autocomplete="tel"
+                    placeholder="+255712345678"
+                >
+            </label>
+
+            <small style="color:#6b7280;">
+                Use the reachable number where you want to receive
+                order notifications.
+            </small>
+
+
+            <!-- PASSWORD -->
+            <label>
+                Password
+
+                <input
+                    id="password"
+                    type="password"
+                    minlength="8"
+                    required
+                    autocomplete="new-password"
+                    placeholder="8+ chars, upper, lower, number, symbol"
+                >
+            </label>
+
+
+            <!-- SUBMIT -->
+            <button
+                id="register-button"
+                class="primary-btn"
+                type="submit"
+            >
+                Create Account
+            </button>
+
+
+           
+
+        </form>
+
+
+        <!-- LOGIN LINK -->
+
+        <p>
+            Already have an account?
+            <a href="/login">Login</a>
+        </p>
+
+    </div>
+
+</main>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+document
+    .getElementById("register-form")
+    .addEventListener("submit", async e => {
+
+        e.preventDefault();
+
+
+        // =====================================
+        // ELEMENTS
+        // =====================================
+
+        const message =
+            document.getElementById("form-message");
+
+        const registerButton =
+            document.getElementById("register-button");
+
+
+        // =====================================
+        // CLEAR PREVIOUS MESSAGE
+        // =====================================
+
+        message.textContent = "";
+
+
+        // =====================================
+        // GET FORM VALUES
+        // =====================================
+
+        const name =
+            document
+                .getElementById("name")
+                .value
+                .trim();
+
+
+        const email =
+            document
+                .getElementById("email")
+                .value
+                .trim()
+                .toLowerCase();
+
+
+        const whatsappNumber =
+            document
+                .getElementById("whatsapp_number")
+                .value
+                .trim();
+
+
+        const password =
+            document
+                .getElementById("password")
+                .value;
+
+
+        // =====================================
+        // BASIC FRONTEND VALIDATION
+        // =====================================
+
+        if (!name) {
+
+            message.textContent =
+                "Please enter your name.";
+
+            return;
+        }
+
+
+        if (!email) {
+
+            message.textContent =
+                "Please enter your email.";
+
+            return;
+        }
+
+
+        if (!whatsappNumber) {
+
+            message.textContent =
+                "Please enter your phone number.";
+
+            return;
+        }
+
+
+        if (
+            password.length < 8 ||
+            !/[A-Z]/.test(password) ||
+            !/[a-z]/.test(password) ||
+            !/[0-9]/.test(password) ||
+            !/[^A-Za-z0-9]/.test(password)
+        ) {
+
+            message.textContent =
+                "Password needs 8+ characters, upper/lower case, number and symbol.";
+
+            return;
+        }
+
+
+        // =====================================
+        // DISABLE BUTTON
+        // =====================================
+
+        registerButton.disabled = true;
+
+        registerButton.textContent =
+            "Creating Account...";
+
+
+        // =====================================
+        // SEND TO FLASK BACKEND
+        // =====================================
+
+        try {
+
+            const data = await apiRequest(
+
+                "/api/auth/register",
+
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        name: name,
+
+                        email: email,
+
+                        whatsapp_number:
+                            whatsappNumber,
+
+                        password: password
+
+                    })
+
+                }
+
+            );
+
+
+            // =================================
+            // SUCCESS
+            // =================================
+
+            if (data?.success) {
+
+                message.textContent =
+                    data.message ||
+                    "Account created successfully.";
+
+                location.href =
+                    "/products";
+
+                return;
+            }
+
+
+            // =================================
+            // BACKEND VALIDATION ERROR
+            // =================================
+
+            message.textContent =
+                data?.message ||
+                "Registration failed.";
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Registration error:",
+                error
+            );
+
+
+            // =================================
+            // TRY TO READ BACKEND ERROR
+            // =================================
+
+            let errorMessage =
+                "Registration failed. Please try again.";
+
+
+            if (error?.message) {
+
+                errorMessage =
+                    error.message;
+
+            }
+
+
+            // =================================
+            // SHOW ERROR
+            // =================================
+
+            message.textContent =
+                errorMessage;
+
+        }
+
+        finally {
+
+            // =================================
+            // ENABLE BUTTON AGAIN
+            // =================================
+
+            registerButton.disabled = false;
+
+            registerButton.textContent =
+                "Create Account";
+
+        }
+
+    });
+
+</script>
+
+{% endblock %}
+

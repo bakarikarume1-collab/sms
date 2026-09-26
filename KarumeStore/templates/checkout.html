@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Checkout | KarumeStore{% endblock %}
+{% block content %}
+<main class="page">
+    <div class="page-heading"><span class="eyebrow">CHECKOUT</span><h1>Delivery Details</h1><p>Payment method: Cash on Delivery</p></div>
+    <div class="checkout-card">
+        <form id="checkout-form">
+            <label>Full Name<input id="delivery_name" required></label>
+            <label>Phone Number<input id="delivery_phone" required placeholder="+255..."></label>
+            <label>Delivery Address<textarea id="delivery_address" required></textarea></label>
+            <button class="secondary-btn" id="share-location" type="button">Share Delivery Location</button>
+            <small id="location-message">Location sharing is optional.</small>
+            <div class="cod-box"><strong>💵 Cash on Delivery</strong><span>Pay when your order is delivered.</span></div>
+            <button class="primary-btn" type="submit">Place Order</button>
+            <p id="checkout-message" class="form-message"></p>
+        </form>
+    </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById("checkout-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const message = document.getElementById("checkout-message");
+    const data = await apiRequest("/api/orders", {
+        method: "POST",
+        body: JSON.stringify({
+            delivery_name: document.getElementById("delivery_name").value,
+            delivery_phone: document.getElementById("delivery_phone").value,
+            delivery_address: document.getElementById("delivery_address").value,
+            delivery_latitude: window.deliveryLocation?.latitude ?? null,
+            delivery_longitude: window.deliveryLocation?.longitude ?? null
+        })
+    });
+    if (data?.success) {
+        message.textContent = `${data.message} Order: ${data.order.order_number}`;
+        setTimeout(() => location.href = "/orders", 1000);
+    } else {
+        message.textContent = data?.message || "Unable to place order.";
+    }
+});
+
+document.getElementById("share-location").addEventListener("click", () => {
+    const message = document.getElementById("location-message");
+
+    if (!navigator.geolocation) {
+        message.textContent = "Location sharing is not supported by this browser.";
+        return;
+    }
+
+    message.textContent = "Requesting your permission...";
+
+    navigator.geolocation.getCurrentPosition(position => {
+        window.deliveryLocation = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+        };
+        message.textContent = "Location ready to share with this order.";
+    }, () => {
+        message.textContent = "Location was not shared. You can continue without it.";
+    });
+});
+</script>
+{% endblock %}

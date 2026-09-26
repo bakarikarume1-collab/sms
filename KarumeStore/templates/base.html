@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}KarumeStore{% endblock %}</title>
+
+    <!-- =====================================================
+         MAIN WEBSITE CSS
+         ===================================================== -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% if request.path.startswith('/admin') %}
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+    {% endif %}
+
+
+    <!-- =====================================================
+         SIDEBAR + BASE PAGE CSS
+         ===================================================== -->
+    <style>
+
+        /* =====================================================
+           CSS VARIABLES
+           ===================================================== */
+
+        :root {
+            --sidebar-width: 280px;
+
+            --sidebar-bg: #ffffff;
+            --sidebar-border: #e5e7eb;
+
+            --text-main: #111827;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+
+            --primary: #f97316;
+            --primary-light: #fff7ed;
+
+            --hover-bg: #fff7ed;
+
+            --overlay: rgba(0, 0, 0, 0.35);
+
+            --transition: 0.25s ease;
+        }
+
+
+        /* =====================================================
+           RESET
+           ===================================================== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+        }
+
+
+        body.sidebar-open {
+            overflow: hidden;
+        }
+
+
+        /* =====================================================
+           NAVBAR
+           ===================================================== */
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1500;
+
+            width: 100%;
+
+            background: rgba(255, 255, 255, 0.96);
+
+            border-bottom: 1px solid #eeeeee;
+
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+
+        .nav-container {
+            width: 100%;
+            max-width: 1400px;
+
+            margin: 0 auto;
+
+            min-height: 70px;
+
+            padding: 0 24px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+
+        /* =====================================================
+           LOGO
+           ===================================================== */
+
+        .logo {
+            text-decoration: none;
+
+            font-size: 24px;
+            font-weight: 900;
+
+            color: #111827;
+
+            white-space: nowrap;
+        }
+
+
+        .logo span {
+            color: var(--primary);
+        }
+
+
+        /* =====================================================
+           NORMAL NAV LINKS
+           ===================================================== */
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 26px;
+        }
+
+
+        .nav-links a {
+            text-decoration: none;
+
+            color: #374151;
+
+            font-size: 14px;
+            font-weight: 600;
+
+            transition: var(--transition);
+        }
+
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+
+        /* =====================================================
+           NAV ACTIONS
+           ===================================================== */
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+
+        .theme-toggle,
+        .cart-link,
+        .login-btn {
+            height: 40px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 10px;
+
+            text-decoration: none;
+
+            transition: var(--transition);
+        }
+
+
+        .theme-toggle {
+            width: 40px;
+
+            border: 1px solid #e5e7eb;
+
+            background: #ffffff;
+
+            cursor: pointer;
+
+            font-size: 18px;
+        }
+
+
+        .theme-toggle:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+
+        .cart-link {
+            padding: 0 12px;
+
+            color: #374151;
+
+            border: 1px solid #e5e7eb;
+
+            background: #ffffff;
+
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+
+        .cart-link:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+
+        #cart-count {
+            margin-left: 5px;
+
+            min-width: 20px;
+            height: 20px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            background: var(--primary);
+            color: white;
+
+            font-size: 11px;
+        }
+
+
+        .login-btn {
+            padding: 0 18px;
+
+            background: var(--primary);
+            color: white;
+
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+
+        .login-btn:hover {
+            background: #ea580c;
+            transform: translateY(-1px);
+        }
+
+
+        /* =====================================================
+           MOBILE MENU BUTTON
+           ===================================================== */
+
+        .mobile-menu-btn {
+            display: none;
+
+            width: 42px;
+            height: 42px;
+
+            border: 1px solid #e5e7eb;
+
+            border-radius: 10px;
+
+            background: #ffffff;
+
+            color: #111827;
+
+            font-size: 22px;
+
+            cursor: pointer;
+
+            transition: var(--transition);
+        }
+
+
+        .mobile-menu-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+
+        /* =====================================================
+           SIDEBAR
+           ===================================================== */
+
+        .side-sidebar {
+            position: fixed;
+
+            top: 0;
+            left: 0;
+
+            width: var(--sidebar-width);
+            height: 100vh;
+
+            background: var(--sidebar-bg);
+
+            border-right: 1px solid var(--sidebar-border);
+
+            box-shadow: 8px 0 30px rgba(0, 0, 0, 0.08);
+
+            z-index: 2000;
+
+            transform: translateX(-100%);
+
+            transition: transform 0.3s ease;
+
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+
+        .side-sidebar.active {
+            transform: translateX(0);
+        }
+
+
+        /* =====================================================
+           SIDEBAR HEADER
+           ===================================================== */
+
+        .sidebar-header {
+            min-height: 72px;
+
+            padding: 0 20px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            border-bottom: 1px solid #eeeeee;
+        }
+
+
+        .sidebar-logo {
+            text-decoration: none;
+
+            font-size: 23px;
+            font-weight: 900;
+
+            color: var(--text-main);
+        }
+
+
+        .sidebar-logo span {
+            color: var(--primary);
+        }
+
+
+        .sidebar-close {
+            width: 36px;
+            height: 36px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: transparent;
+
+            color: var(--text-secondary);
+
+            font-size: 29px;
+            line-height: 1;
+
+            cursor: pointer;
+
+            transition: var(--transition);
+        }
+
+
+        .sidebar-close:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+
+        /* =====================================================
+           SIDEBAR MENU
+           ===================================================== */
+
+        .sidebar-menu {
+            padding: 22px 15px 30px;
+        }
+
+
+        .sidebar-section {
+            margin-bottom: 28px;
+        }
+
+
+        .sidebar-title {
+            margin: 0 0 10px 12px;
+
+            color: var(--text-muted);
+
+            font-size: 10px;
+            font-weight: 800;
+
+            letter-spacing: 1.2px;
+        }
+
+
+        /* =====================================================
+           SIDEBAR LINKS
+           ===================================================== */
+
+        .sidebar-link {
+            position: relative;
+
+            display: flex;
+            align-items: center;
+
+            gap: 13px;
+
+            width: 100%;
+
+            padding: 12px 13px;
+
+            margin-bottom: 4px;
+
+            border-radius: 10px;
+
+            color: var(--text-secondary);
+
+            text-decoration: none;
+
+            font-size: 14px;
+            font-weight: 600;
+
+            transition: all 0.2s ease;
+        }
+
+
+        .sidebar-link:hover {
+            background: var(--hover-bg);
+
+            color: var(--primary);
+
+            transform: translateX(3px);
+        }
+
+
+        .sidebar-link span:first-child {
+            width: 24px;
+
+            flex-shrink: 0;
+
+            text-align: center;
+
+            font-size: 17px;
+        }
+
+
+        /* =====================================================
+           SIDEBAR CART COUNT
+           ===================================================== */
+
+        .sidebar-cart-count {
+            margin-left: auto;
+
+            min-width: 22px;
+            height: 22px;
+
+            padding: 0 6px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50px;
+
+            background: var(--primary);
+
+            color: white;
+
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+
+        /* =====================================================
+           SIDEBAR OVERLAY
+           ===================================================== */
+
+        .sidebar-overlay {
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 1900;
+
+            background: var(--overlay);
+
+            opacity: 0;
+
+            visibility: hidden;
+
+            transition: all 0.3s ease;
+        }
+
+
+        .sidebar-overlay.active {
+            opacity: 1;
+
+            visibility: visible;
+        }
+
+
+        /* =====================================================
+           EMPTY FOOTER
+           ===================================================== */
+
+        .footer {
+            display: none !important;
+        }
+
+
+        /* =====================================================
+           MOBILE
+           ===================================================== */
+
+        @media (max-width: 900px) {
+
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: inline-flex;
+
+                align-items: center;
+                justify-content: center;
+            }
+
+        }
+
+
+        @media (max-width: 600px) {
+
+            .nav-container {
+                padding: 0 15px;
+
+                min-height: 64px;
+            }
+
+
+            .logo {
+                font-size: 21px;
+            }
+
+
+            .nav-actions {
+                gap: 6px;
+            }
+
+
+            .theme-toggle {
+                width: 38px;
+                height: 38px;
+            }
+
+
+            .cart-link {
+                padding: 0 9px;
+
+                height: 38px;
+            }
+
+
+            .login-btn {
+                padding: 0 12px;
+
+                height: 38px;
+            }
+
+
+            .mobile-menu-btn {
+                width: 38px;
+                height: 38px;
+            }
+
+
+            .side-sidebar {
+                width: min(290px, 85vw);
+            }
+
+        }
+
+
+        @media (max-width: 430px) {
+
+            .login-btn {
+                display: none;
+            }
+
+        }
+
+
+        /* =====================================================
+           DARK MODE SUPPORT
+           ===================================================== */
+
+        body.dark-mode .navbar {
+            background: rgba(17, 24, 39, 0.96);
+
+            border-color: #374151;
+        }
+
+
+        body.dark-mode .logo {
+            color: #ffffff;
+        }
+
+
+        body.dark-mode .nav-links a {
+            color: #d1d5db;
+        }
+
+
+        body.dark-mode .theme-toggle,
+        body.dark-mode .cart-link,
+        body.dark-mode .mobile-menu-btn {
+            background: #1f2937;
+
+            border-color: #374151;
+
+            color: #ffffff;
+        }
+
+
+        body.dark-mode .side-sidebar {
+            background: #111827;
+
+            border-color: #374151;
+        }
+
+
+        body.dark-mode .sidebar-header {
+            border-color: #374151;
+        }
+
+
+        body.dark-mode .sidebar-logo {
+            color: #ffffff;
+        }
+
+
+        body.dark-mode .sidebar-link {
+            color: #d1d5db;
+        }
+
+
+        body.dark-mode .sidebar-link:hover {
+            background: #1f2937;
+
+            color: #fb923c;
+        }
+
+
+        body.dark-mode .sidebar-close {
+            color: #d1d5db;
+        }
+
+
+        body.dark-mode .sidebar-title {
+            color: #6b7280;
+        }
+
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+
+
+<body>
+
+    <!-- =====================================================
+         NAVBAR
+         ===================================================== -->
+
+    <nav class="navbar">
+
+        <div class="nav-container">
+
+            <!-- LOGO -->
+            <a href="/" class="sidebar-logo">
+                {{ store_name }}
+            </a>
+
+
+            <!-- NORMAL NAVIGATION -->
+            <div class="nav-links">
+
+                <a href="/">
+                    Home
+                </a>
+
+                <a href="/products">
+                    Shop
+                </a>
+
+                <a href="/#categories">
+                    Categories
+                </a>
+
+                <a href="/#featured">
+                    Featured
+                </a>
+
+            </div>
+
+
+            <!-- NAV ACTIONS -->
+            <div class="nav-actions">
+
+                <button
+                    class="theme-toggle"
+                    id="theme-toggle"
+                    type="button"
+                    aria-label="Toggle theme">
+                    ◐
+                </button>
+
+
+                <a href="/cart" class="cart-link">
+                    🛒
+                    <span id="cart-count">0</span>
+                </a>
+
+
+                <a
+                    href="/login"
+                    class="login-btn"
+                    id="account-link">
+                    Login
+                </a>
+                {% if user and user.role != "admin" %}
+                    <a href="/account" class="account-link">
+                        👤 My Account
+                    </a>
+                {% endif %}
+
+                {% if user %}
+
+                    <button style="cursor: pointer;"
+                        class="login-btn"
+                        type="button"
+                        onclick="logoutUser()"
+                    >
+                        Logout
+                    </button>
+                {% endif %}
+                
+                
+
+
+
+                <!-- MOBILE SIDEBAR BUTTON -->
+                <button
+                    class="mobile-menu-btn"
+                    id="mobile-menu-button"
+                    type="button"
+                    aria-label="Open menu">
+                    ☰
+                </button>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+
+    <!-- =====================================================
+         SIDEBAR
+         ===================================================== -->
+
+    <aside
+        class="side-sidebar"
+        id="side-sidebar"
+        aria-label="Main navigation">
+
+
+        <!-- SIDEBAR HEADER -->
+
+        <div class="sidebar-header">
+
+            <a href="/" class="sidebar-logo">
+                {{ store_name }} <span>Store</span>
+            </a>
+
+
+            <button
+                class="sidebar-close"
+                id="sidebar-close"
+                type="button"
+                aria-label="Close menu">
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- SIDEBAR CONTENT -->
+
+        <div class="sidebar-menu">
+
+
+            <!-- MAIN MENU -->
+
+            <div class="sidebar-section">
+
+                <p class="sidebar-title">
+                    MAIN MENU
+                </p>
+
+
+                <a href="/" class="sidebar-link">
+                    <span>🏠</span>
+                    <span>Home</span>
+                </a>
+
+
+                <a href="/products" class="sidebar-link">
+                    <span>🛍️</span>
+                    <span>Shop</span>
+                </a>
+
+
+                <a href="/#categories" class="sidebar-link">
+                    <span>📦</span>
+                    <span>Categories</span>
+                </a>
+
+
+                <a href="/#featured" class="sidebar-link">
+                    <span>⭐</span>
+                    <span>Featured</span>
+                </a>
+
+            </div>
+
+
+            <!-- ACCOUNT -->
+
+            <div class="sidebar-section">
+
+                <p class="sidebar-title">
+                    MY ACCOUNT
+                </p>
+
+
+                <a href="/orders" class="sidebar-link">
+                    <span>📋</span>
+                    <span>My Orders</span>
+                </a>
+
+
+                <a href="/cart" class="sidebar-link">
+
+                    <span>🛒</span>
+
+                    <span>Cart</span>
+
+                    <span
+                        class="sidebar-cart-count"
+                        id="sidebar-cart-count">
+                        0
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="/login"
+                    class="sidebar-link"
+                    id="sidebar-account-link">
+
+                    <span>👤</span>
+
+                    <span>Login</span>
+
+                </a>
+
+
+                <a href="/register" class="sidebar-link">
+
+                    <span>➕</span>
+
+                    <span>Create Account</span>
+
+                </a>
+
+            </div>
+
+
+            <!-- CUSTOMER SUPPORT -->
+
+            <div class="sidebar-section">
+
+                <p class="sidebar-title">
+                    CUSTOMER SUPPORT
+                </p>
+
+
+                <a href="/contact" class="sidebar-link">
+
+                    <span>💬</span>
+
+                    <span>Contact Us</span>
+
+                </a>
+
+
+                <a href="/#about" class="sidebar-link">
+
+                    <span>ℹ️</span>
+
+                    <span>About KarumeStore</span>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =====================================================
+         SIDEBAR OVERLAY
+         ===================================================== -->
+
+    <div
+        class="sidebar-overlay"
+        id="sidebar-overlay">
+    </div>
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+         ===================================================== -->
+
+    {% block content %}{% endblock %}
+
+
+    <!-- =====================================================
+         EMPTY FOOTER
+         ===================================================== -->
+
+    <footer class="footer"></footer>
+
+
+    <!-- =====================================================
+         MAIN WEBSITE JAVASCRIPT
+         ===================================================== -->
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+
+    <!-- =====================================================
+         SIDEBAR + BASE JAVASCRIPT
+         ===================================================== -->
+
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            /* =================================================
+               ELEMENTS
+               ================================================= */
+
+            const sidebar =
+                document.getElementById("side-sidebar");
+
+            const sidebarOverlay =
+                document.getElementById("sidebar-overlay");
+
+            const sidebarOpenButton =
+                document.getElementById("mobile-menu-button");
+
+            const sidebarCloseButton =
+                document.getElementById("sidebar-close");
+
+
+            /* =================================================
+               OPEN SIDEBAR
+               ================================================= */
+
+            function openSidebar() {
+
+                if (!sidebar) return;
+
+                sidebar.classList.add("active");
+
+                sidebarOverlay?.classList.add("active");
+
+                document.body.classList.add("sidebar-open");
+
+            }
+
+
+            /* =================================================
+               CLOSE SIDEBAR
+               ================================================= */
+
+            function closeSidebar() {
+
+                if (!sidebar) return;
+
+                sidebar.classList.remove("active");
+
+                sidebarOverlay?.classList.remove("active");
+
+                document.body.classList.remove("sidebar-open");
+
+            }
+
+
+            /* =================================================
+               BUTTON EVENTS
+               ================================================= */
+
+            sidebarOpenButton?.addEventListener(
+                "click",
+                openSidebar
+            );
+
+
+            sidebarCloseButton?.addEventListener(
+                "click",
+                closeSidebar
+            );
+
+
+            sidebarOverlay?.addEventListener(
+                "click",
+                closeSidebar
+            );
+
+
+            /* =================================================
+               CLOSE SIDEBAR WHEN CLICKING A LINK
+               ================================================= */
+
+            document
+                .querySelectorAll(".sidebar-link")
+                .forEach(function (link) {
+
+                    link.addEventListener(
+                        "click",
+                        function () {
+
+                            closeSidebar();
+
+                        }
+                    );
+
+                });
+
+
+            /* =================================================
+               ESC KEY
+               ================================================= */
+
+            document.addEventListener(
+                "keydown",
+                function (event) {
+
+                    if (event.key === "Escape") {
+
+                        closeSidebar();
+
+                    }
+
+                }
+            );
+
+
+            /* =================================================
+               CART COUNT
+               ================================================= */
+
+            function updateSidebarCartCount() {
+
+                const mainCart =
+                    document.getElementById("cart-count");
+
+                const sidebarCart =
+                    document.getElementById(
+                        "sidebar-cart-count"
+                    );
+
+                if (!mainCart || !sidebarCart) {
+                    return;
+                }
+
+                sidebarCart.textContent =
+                    mainCart.textContent || "0";
+
+            }
+
+
+            /*
+             * Initial cart count
+             */
+
+            updateSidebarCartCount();
+
+
+            /*
+             * Keep sidebar cart synchronized.
+             */
+
+            const cartCount =
+                document.getElementById("cart-count");
+
+            if (cartCount) {
+
+                const observer =
+                    new MutationObserver(
+                        function () {
+
+                            updateSidebarCartCount();
+
+                        }
+                    );
+
+                observer.observe(
+                    cartCount,
+                    {
+                        childList: true,
+                        subtree: true,
+                        characterData: true
+                    }
+                );
+
+            }
+
+
+            /* =================================================
+               THEME TOGGLE
+               ================================================= */
+
+            const themeToggle =
+                document.getElementById("theme-toggle");
+
+
+            function applyTheme(theme) {
+
+                if (theme === "dark") {
+
+                    document.body.classList.add(
+                        "dark-mode"
+                    );
+
+                    if (themeToggle) {
+                        themeToggle.textContent = "☀️";
+                    }
+
+                } else {
+
+                    document.body.classList.remove(
+                        "dark-mode"
+                    );
+
+                    if (themeToggle) {
+                        themeToggle.textContent = "🌙";
+                    }
+
+                }
+
+            }
+
+
+            /*
+             * Load saved theme
+             */
+
+            const savedTheme =
+                localStorage.getItem("karume-theme") ||
+                "light";
+
+            applyTheme(savedTheme);
+
+
+            /*
+             * Toggle theme
+             */
+
+            themeToggle?.addEventListener(
+                "click",
+                function () {
+
+                    const isDark =
+                        document.body.classList.contains(
+                            "dark-mode"
+                        );
+
+                    const newTheme =
+                        isDark ? "light" : "dark";
+
+                    localStorage.setItem(
+                        "karume-theme",
+                        newTheme
+                    );
+
+                    applyTheme(newTheme);
+
+                }
+            );
+
+
+            /* =================================================
+               RESPONSIVE CLEANUP
+               ================================================= */
+
+            window.addEventListener(
+                "resize",
+                function () {
+
+                    if (
+                        window.innerWidth > 900
+                    ) {
+
+                        closeSidebar();
+
+                    }
+
+                }
+            );
+
+        });
+
+        /*--LOGOUT--*/
+        async function logoutUser() {
+
+        try {
+
+            const response = await fetch(
+                "/api/auth/logout",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "same-origin"
+                }
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+
+                window.location.href = "/login";
+
+            } else {
+
+                alert(
+                    data.message ||
+                    "Unable to logout."
+                );
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Logout error:",
+                error
+            );
+
+            alert(
+                "Something went wrong while logging out."
+            );
+
+        }
+    }
+
+    </script>
+
+
+    <!-- =====================================================
+         PAGE-SPECIFIC SCRIPTS
+         ===================================================== -->
+
+    {% block scripts %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Bulk SMS | KarumeStore{% endblock %}
+{% block content %}
+<main class="page">
+    <div class="page-heading">
+        <span class="eyebrow">ADMIN TOOL</span>
+        <h1>Bulk SMS</h1>
+        <p>Create a campaign, preview its cost, then send it explicitly.</p>
+    </div>
+
+    <section class="dashboard-stats" id="sms-stats">
+        <div class="product-overview-card"><span>Contacts</span><strong id="total-contacts">0</strong></div>
+        <div class="product-overview-card"><span>Campaigns</span><strong id="total-campaigns">0</strong></div>
+        <div class="product-overview-card"><span>Sent SMS</span><strong id="sent-sms">0</strong></div>
+        <div class="product-overview-card"><span>Pending SMS</span><strong id="pending-sms">0</strong></div>
+    </section>
+
+    <section class="checkout-card">
+        <h2>Add Contact</h2>
+        <form id="contact-form">
+            <label>Full name<input id="contact-name" required></label>
+            <label>Phone<input id="contact-phone" required placeholder="0712345678"></label>
+            <label>Email<input id="contact-email" type="email"></label>
+            <button class="primary-btn" type="submit">Add Contact</button>
+            <p id="contact-result" class="form-message"></p>
+        </form>
+        <h2>Import Contacts</h2>
+        <form id="import-form">
+            <input id="contact-file" type="file" accept=".csv,text/csv" required>
+            <small>CSV columns: full_name, phone, email</small>
+            <button class="secondary-btn" type="submit">Import CSV</button>
+        </form>
+    </section>
+
+    <section class="checkout-card">
+        <h2>Create Campaign</h2>
+        <form id="campaign-form">
+            <label>Campaign name<input id="campaign-name" required maxlength="160"></label>
+            <label>Message<textarea id="campaign-message" required maxlength="1600"></textarea></label>
+            <p><span id="character-count">0</span>/1600 characters · <span id="segment-count">1</span> segment(s) per recipient</p>
+            <label>Contact IDs<input id="contact-ids" placeholder="Example: 1,2,3" required></label>
+            <button class="primary-btn" type="submit">Create Draft</button>
+            <p id="campaign-message-result" class="form-message"></p>
+        </form>
+    </section>
+
+    <section class="checkout-card">
+        <h2>Campaign History</h2>
+        <div id="campaign-list"><p class="loading">Loading campaigns...</p></div>
+    </section>
+</main>
+{% endblock %}
+{% block scripts %}
+<script>
+const messageInput = document.getElementById("campaign-message");
+const characterCount = document.getElementById("character-count");
+const segmentCount = document.getElementById("segment-count");
+
+document.getElementById("contact-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    const result = document.getElementById("contact-result");
+    const data = await apiRequest("/api/admin/sms/contacts", {
+        method: "POST",
+        body: JSON.stringify({
+            full_name: document.getElementById("contact-name").value,
+            phone: document.getElementById("contact-phone").value,
+            email: document.getElementById("contact-email").value
+        })
+    });
+    result.textContent = data?.success ? "Contact added." : (data?.message || "Unable to add contact.");
+    if (data?.success) event.target.reset();
+    await loadSmsDashboard();
+});
+
+document.getElementById("import-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    const form = new FormData();
+    form.append("file", document.getElementById("contact-file").files[0]);
+    const response = await fetch("/api/admin/sms/contacts/import", {method: "POST", body: form});
+    const data = await response.json();
+    document.getElementById("contact-result").textContent = data?.success
+        ? `${data.created} contacts imported.`
+        : (data?.message || "Unable to import contacts.");
+    await loadSmsDashboard();
+});
+
+function updateMessageStats() {
+    const length = messageInput.value.length;
+    characterCount.textContent = length;
+    segmentCount.textContent = length <= 160 ? 1 : Math.ceil(length / 153);
+}
+
+messageInput.addEventListener("input", updateMessageStats);
+
+async function loadSmsDashboard() {
+    const data = await apiRequest("/api/admin/sms/dashboard");
+    document.getElementById("total-contacts").textContent = data.total_contacts;
+    document.getElementById("total-campaigns").textContent = data.total_campaigns;
+    document.getElementById("sent-sms").textContent = data.sent_sms;
+    document.getElementById("pending-sms").textContent = data.pending_sms;
+}
+
+async function loadCampaigns() {
+    const data = await apiRequest("/api/admin/sms/campaigns");
+    document.getElementById("campaign-list").innerHTML = data.campaigns.map(campaign => `
+        <div class="order-card">
+            <strong>${escapeHtml(campaign.name)}</strong>
+            <span class="status">${escapeHtml(campaign.status)}</span>
+            <p>${campaign.recipient_count} recipients · ${campaign.sms_count} SMS</p>
+            ${campaign.status === "DRAFT" ? `<button class="primary-btn" onclick="sendCampaign(${campaign.id})">Send Campaign</button>` : ""}
+        </div>
+    `).join("") || "<p>No campaigns yet.</p>";
+}
+
+document.getElementById("campaign-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    const result = document.getElementById("campaign-message-result");
+    const contactIds = document.getElementById("contact-ids").value.split(",").map(value => Number(value.trim())).filter(Boolean);
+    const data = await apiRequest("/api/admin/sms/campaigns", {
+        method: "POST",
+        body: JSON.stringify({
+            name: document.getElementById("campaign-name").value,
+            message: messageInput.value,
+            contact_ids: contactIds
+        })
+    });
+    result.textContent = data?.success ? "Campaign draft created." : (data?.message || "Unable to create campaign.");
+    await loadCampaigns();
+    await loadSmsDashboard();
+});
+
+async function sendCampaign(id) {
+    if (!confirm("Send this campaign now?")) return;
+    const data = await apiRequest(`/api/admin/sms/campaigns/${id}/send`, {method: "POST"});
+    alert(data?.message || (data?.success ? "Campaign queued." : "Unable to queue campaign."));
+    await loadCampaigns();
+    await loadSmsDashboard();
+}
+
+Promise.all([loadSmsDashboard(), loadCampaigns()]).catch(error => {
+    document.getElementById("campaign-message-result").textContent = error.message;
+});
+</script>
+{% endblock %}

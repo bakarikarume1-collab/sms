@@ -1,0 +1,1873 @@
+{% extends "base.html" %}
+
+{% block title %}
+Edit Product | KarumeStore
+{% endblock %}
+
+
+{% block content %}
+
+<main class="page admin-product-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+         ===================================================== -->
+
+    <section class="product-page-header">
+
+        <div>
+            <div class="page-badge">
+                PRODUCT MANAGEMENT
+            </div>
+
+            <h1>
+                Edit Product
+            </h1>
+
+            <p>
+                Update product information, pricing, stock,
+                category and product image.
+            </p>
+        </div>
+
+        <a
+            href="/admin/products"
+            class="back-button"
+        >
+            ← Back to Products
+        </a>
+
+    </section>
+
+
+    <!-- =====================================================
+         LOADING
+         ===================================================== -->
+
+    <div
+        id="loadingMessage"
+        class="loading-box"
+    >
+        <div class="loading-spinner"></div>
+
+        <p>
+            Loading product information...
+        </p>
+    </div>
+
+
+    <!-- =====================================================
+         ERROR
+         ===================================================== -->
+
+    <div
+        id="errorMessage"
+        class="message-box error-message"
+        style="display: none;"
+    ></div>
+
+
+    <!-- =====================================================
+         SUCCESS
+         ===================================================== -->
+
+    <div
+        id="successMessage"
+        class="message-box success-message"
+        style="display: none;"
+    ></div>
+
+
+    <!-- =====================================================
+         FORM
+         ===================================================== -->
+
+    <form
+        id="editProductForm"
+        class="product-form"
+        enctype="multipart/form-data"
+        style="display: none;"
+    >
+
+        <!-- =================================================
+             LEFT COLUMN
+             ================================================= -->
+
+        <div class="form-column">
+
+            <!-- PRODUCT INFORMATION -->
+
+            <section class="form-card">
+
+                <div class="card-header">
+
+                    <div>
+                        <h2>
+                            Product Information
+                        </h2>
+
+                        <p>
+                            Basic information about this product.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <!-- NAME -->
+
+                <div class="form-group">
+
+                    <label for="productName">
+                        Product Name
+                        <span>*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="productName"
+                        name="name"
+                        placeholder="Enter product name"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- DESCRIPTION -->
+
+                <div class="form-group">
+
+                    <label for="productDescription">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="productDescription"
+                        name="description"
+                        rows="6"
+                        placeholder="Describe this product..."
+                    ></textarea>
+
+                </div>
+
+
+                <!-- CATEGORY -->
+
+                <div class="form-group">
+
+                    <label for="productCategory">
+                        Category
+                        <span>*</span>
+                    </label>
+
+                    <select
+                        id="productCategory"
+                        name="category_id"
+                        required
+                    >
+
+                        <option value="">
+                            Select category
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- FEATURED -->
+
+                <div class="featured-box">
+
+                    <label class="checkbox-label">
+
+                        <input
+                            type="checkbox"
+                            id="productFeatured"
+                            name="is_featured"
+                            value="true"
+                        >
+
+                        <span class="custom-checkbox"></span>
+
+                        <span>
+                            <strong>
+                                Featured Product
+                            </strong>
+
+                            <small>
+                                Display this product in the
+                                featured section.
+                            </small>
+                        </span>
+
+                    </label>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 PRICING & STOCK
+                 ================================================= -->
+
+            <section class="form-card">
+
+                <div class="card-header">
+
+                    <div>
+                        <h2>
+                            Pricing & Inventory
+                        </h2>
+
+                        <p>
+                            Manage product price and available stock.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <!-- PRICE -->
+
+                    <div class="form-group">
+
+                        <label for="productPrice">
+                            Price
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-with-prefix">
+
+                            <span>
+                                TSh
+                            </span>
+
+                            <input
+                                type="number"
+                                id="productPrice"
+                                name="price"
+                                min="0"
+                                step="0.01"
+                                placeholder="0"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DISCOUNT -->
+
+                    <div class="form-group">
+
+                        <label for="productDiscount">
+                            Discount Price
+                        </label>
+
+                        <div class="input-with-prefix">
+
+                            <span>
+                                TSh
+                            </span>
+
+                            <input
+                                type="number"
+                                id="productDiscount"
+                                name="discount_price"
+                                min="0"
+                                step="0.01"
+                                placeholder="Optional"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- STOCK -->
+
+                    <div class="form-group">
+
+                        <label for="productStock">
+                            Stock Quantity
+                            <span>*</span>
+                        </label>
+
+                        <input
+                            type="number"
+                            id="productStock"
+                            name="stock"
+                            min="0"
+                            step="1"
+                            placeholder="0"
+                            required
+                        >
+
+                        <small class="field-help">
+                            Number of units currently available.
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- STOCK STATUS -->
+
+                <div
+                    id="stockStatus"
+                    class="stock-status"
+                ></div>
+
+            </section>
+
+        </div>
+
+
+        <!-- =====================================================
+             RIGHT COLUMN
+             ===================================================== -->
+
+        <div class="form-column">
+
+            <!-- IMAGE -->
+
+            <section class="form-card">
+
+                <div class="card-header">
+
+                    <div>
+                        <h2>
+                            Product Image
+                        </h2>
+
+                        <p>
+                            Replace the current product image.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <!-- CURRENT IMAGE -->
+
+                <div
+                    id="currentImageSection"
+                    class="current-image-section"
+                >
+
+                    <div class="image-section-title">
+                        Current Image
+                    </div>
+
+                    <div class="current-image-wrapper">
+
+                        <img
+                            id="currentImage"
+                            class="current-product-image"
+                            src=""
+                            alt="Current product image"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- UPLOAD -->
+
+                <div class="real-image-upload">
+
+                    <label
+                        for="productImage"
+                        class="image-upload-area"
+                        id="imageUploadArea"
+                    >
+
+                        <div
+                            id="imageUploadContent"
+                        >
+
+                            <div class="product-image-upload-icon">
+                                📷
+                            </div>
+
+                            <div id="imageUploadText">
+
+                                <h3>
+                                    Upload New Image
+                                </h3>
+
+                                <p>
+                                    Click here to choose an image
+                                    from your computer
+                                </p>
+
+                                <span>
+                                    JPG, JPEG, PNG or WEBP
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <img
+                            id="newImagePreview"
+                            class="product-image-preview"
+                            src=""
+                            alt="New image preview"
+                            style="display: none;"
+                        >
+
+                    </label>
+
+
+                    <input
+                        type="file"
+                        id="productImage"
+                        name="image"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                        hidden
+                    >
+
+
+                    <button
+                        type="button"
+                        id="removeImageButton"
+                        class="remove-image-button"
+                        style="display: none;"
+                    >
+                        Remove New Image
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 INVENTORY INFO
+                 ================================================= -->
+
+            <section class="inventory-info-card">
+
+                <div class="inventory-icon">
+                    📦
+                </div>
+
+                <div>
+
+                    <h3>
+                        Inventory Management
+                    </h3>
+
+                    <p>
+                        Keep your stock quantity updated.
+                        Products with zero stock can be prevented
+                        from being ordered by customers.
+                    </p>
+
+                </div>
+
+            </section>
+
+        </div>
+
+
+        <!-- =====================================================
+             FORM ACTIONS
+             ===================================================== -->
+
+        <div class="form-actions">
+
+            <a
+                href="/admin/products"
+                class="cancel-button"
+            >
+                Cancel
+            </a>
+
+            <button
+                type="submit"
+                id="saveProductButton"
+                class="save-button"
+            >
+                <span id="saveButtonText">
+                    Save Changes
+                </span>
+            </button>
+
+        </div>
+
+    </form>
+
+</main>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<style>
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.admin-product-page {
+    max-width: 1250px;
+    margin: 0 auto;
+    padding: 45px 25px 80px;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.product-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 25px;
+    margin-bottom: 35px;
+}
+
+.page-badge {
+    display: inline-block;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #3730a3;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+}
+
+.product-page-header h1 {
+    margin: 0 0 8px;
+    font-size: 36px;
+    color: #0f172a;
+}
+
+.product-page-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 15px;
+}
+
+.back-button {
+    text-decoration: none;
+    padding: 12px 18px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.back-button:hover {
+    background: #e2e8f0;
+}
+
+
+/* =========================================================
+   FORM LAYOUT
+   ========================================================= */
+
+.product-form {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 24px;
+}
+
+.form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.form-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
+}
+
+.card-header {
+    margin-bottom: 25px;
+}
+
+.card-header h2 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    color: #0f172a;
+}
+
+.card-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.form-group label span {
+    color: #dc2626;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 13px 14px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #0f172a;
+    background: #ffffff;
+    outline: none;
+    transition: 0.2s ease;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+.field-help {
+    display: block;
+    margin-top: 7px;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   GRID
+   ========================================================= */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+
+/* =========================================================
+   PRICE PREFIX
+   ========================================================= */
+
+.input-with-prefix {
+    display: flex;
+    align-items: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.input-with-prefix span {
+    padding: 13px 12px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    border-right: 1px solid #e2e8f0;
+}
+
+.input-with-prefix input {
+    border: none;
+    border-radius: 0;
+}
+
+.input-with-prefix input:focus {
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   FEATURED
+   ========================================================= */
+
+.featured-box {
+    padding: 16px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    display: none;
+}
+
+.custom-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #cbd5e1;
+    border-radius: 6px;
+    display: block;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.checkbox-label input:checked + .custom-checkbox {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.checkbox-label input:checked + .custom-checkbox::after {
+    content: "✓";
+    position: absolute;
+    left: 3px;
+    top: -2px;
+    color: white;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.checkbox-label strong {
+    display: block;
+    color: #0f172a;
+    font-size: 14px;
+}
+
+.checkbox-label small {
+    display: block;
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   STOCK STATUS
+   ========================================================= */
+
+.stock-status {
+    margin-top: 15px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    display: none;
+}
+
+.stock-status.in-stock {
+    display: block;
+    background: #dcfce7;
+    color: #166534;
+}
+
+.stock-status.low-stock {
+    display: block;
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.stock-status.out-of-stock {
+    display: block;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+
+/* =========================================================
+   CURRENT IMAGE
+   ========================================================= */
+
+.current-image-section {
+    margin-bottom: 25px;
+}
+
+.image-section-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #475569;
+    margin-bottom: 10px;
+}
+
+.current-image-wrapper {
+    width: 100%;
+    height: 260px;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.current-product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+
+/* =========================================================
+   IMAGE UPLOAD
+   ========================================================= */
+
+.real-image-upload {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.image-upload-area {
+    width: 100%;
+    min-height: 220px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px 20px;
+    cursor: pointer;
+    background: #f8fafc;
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        transform 0.2s ease;
+    box-sizing: border-box;
+}
+
+.image-upload-area:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+    transform: translateY(-2px);
+}
+
+.product-image-upload-icon {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    background: #e0e7ff;
+    margin-bottom: 15px;
+}
+
+#imageUploadText h3 {
+    margin: 0 0 7px;
+    font-size: 18px;
+    color: #0f172a;
+}
+
+#imageUploadText p {
+    margin: 0 0 7px;
+    font-size: 14px;
+    color: #64748b;
+}
+
+#imageUploadText span {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.product-image-preview {
+    display: block;
+    max-width: 100%;
+    max-height: 240px;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+
+/* =========================================================
+   REMOVE IMAGE
+   ========================================================= */
+
+.remove-image-button {
+    width: 100%;
+    margin-top: 12px;
+    padding: 11px 18px;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+.remove-image-button:hover {
+    background: #fecaca;
+}
+
+
+/* =========================================================
+   INVENTORY INFO
+   ========================================================= */
+
+.inventory-info-card {
+    display: flex;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 16px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+.inventory-icon {
+    font-size: 28px;
+}
+
+.inventory-info-card h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    color: #1e3a8a;
+}
+
+.inventory-info-card p {
+    margin: 0;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+.message-box {
+    padding: 14px 17px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.error-message {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.success-message {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.loading-box {
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+}
+
+.loading-spinner {
+    width: 38px;
+    height: 38px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 5px;
+}
+
+.cancel-button,
+.save-button {
+    min-width: 130px;
+    padding: 13px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 800;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.cancel-button {
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+}
+
+.cancel-button:hover {
+    background: #e2e8f0;
+}
+
+.save-button {
+    border: none;
+    background: #2563eb;
+    color: white;
+}
+
+.save-button:hover {
+    background: #1d4ed8;
+}
+
+.save-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 850px) {
+
+    .product-form {
+        grid-template-columns: 1fr;
+    }
+
+    .product-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .form-actions {
+        grid-column: auto;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .admin-product-page {
+        padding: 30px 15px 60px;
+    }
+
+    .product-page-header h1 {
+        font-size: 29px;
+    }
+
+    .form-card {
+        padding: 20px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .cancel-button,
+    .save-button {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+}
+
+</style>
+
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async function () {
+
+        // =====================================================
+        // PRODUCT ID
+        // =====================================================
+
+        const productId = "{{ product_id }}";
+
+        // =====================================================
+        // ELEMENTS
+        // =====================================================
+
+        const form =
+            document.getElementById(
+                "editProductForm"
+            );
+
+        const loadingMessage =
+            document.getElementById(
+                "loadingMessage"
+            );
+
+        const errorMessage =
+            document.getElementById(
+                "errorMessage"
+            );
+
+        const successMessage =
+            document.getElementById(
+                "successMessage"
+            );
+
+        const productName =
+            document.getElementById(
+                "productName"
+            );
+
+        const productDescription =
+            document.getElementById(
+                "productDescription"
+            );
+
+        const productCategory =
+            document.getElementById(
+                "productCategory"
+            );
+
+        const productPrice =
+            document.getElementById(
+                "productPrice"
+            );
+
+        const productDiscount =
+            document.getElementById(
+                "productDiscount"
+            );
+
+        const productStock =
+            document.getElementById(
+                "productStock"
+            );
+
+        const productFeatured =
+            document.getElementById(
+                "productFeatured"
+            );
+
+        const currentImage =
+            document.getElementById(
+                "currentImage"
+            );
+
+        const productImage =
+            document.getElementById(
+                "productImage"
+            );
+
+        const newImagePreview =
+            document.getElementById(
+                "newImagePreview"
+            );
+
+        const imageUploadContent =
+            document.getElementById(
+                "imageUploadContent"
+            );
+
+        const removeImageButton =
+            document.getElementById(
+                "removeImageButton"
+            );
+
+        const saveProductButton =
+            document.getElementById(
+                "saveProductButton"
+            );
+
+        const saveButtonText =
+            document.getElementById(
+                "saveButtonText"
+            );
+
+        const stockStatus =
+            document.getElementById(
+                "stockStatus"
+            );
+
+
+        // =====================================================
+        // SHOW ERROR
+        // =====================================================
+
+        function showError(message) {
+
+            errorMessage.textContent =
+                message;
+
+            errorMessage.style.display =
+                "block";
+
+            successMessage.style.display =
+                "none";
+
+        }
+
+
+        // =====================================================
+        // SHOW SUCCESS
+        // =====================================================
+
+        function showSuccess(message) {
+
+            successMessage.textContent =
+                message;
+
+            successMessage.style.display =
+                "block";
+
+            errorMessage.style.display =
+                "none";
+
+        }
+
+
+        // =====================================================
+        // LOAD CATEGORIES
+        // =====================================================
+
+        async function loadCategories(
+            selectedCategoryId
+        ) {
+
+            const response =
+                await apiRequest(
+                    "/api/categories"
+                );
+
+
+            productCategory.innerHTML = `
+                <option value="">
+                    Select category
+                </option>
+            `;
+
+
+            response.forEach(
+                function (category) {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value =
+                        category.id;
+
+                    option.textContent =
+                        category.name;
+
+                    if (
+                        Number(category.id) ===
+                        Number(selectedCategoryId)
+                    ) {
+
+                        option.selected =
+                            true;
+
+                    }
+
+                    productCategory.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+        }
+
+
+        // =====================================================
+        // UPDATE STOCK STATUS
+        // =====================================================
+
+        function updateStockStatus() {
+
+            const stock =
+                Number(
+                    productStock.value
+                );
+
+
+            if (
+                Number.isNaN(stock)
+            ) {
+
+                stockStatus.style.display =
+                    "none";
+
+                return;
+
+            }
+
+
+            if (stock === 0) {
+
+                stockStatus.className =
+                    "stock-status out-of-stock";
+
+                stockStatus.textContent =
+                    "⚠ Product is currently out of stock.";
+
+            }
+
+            else if (stock <= 5) {
+
+                stockStatus.className =
+                    "stock-status low-stock";
+
+                stockStatus.textContent =
+                    `⚠ Low stock: only ${stock} unit(s) remaining.`;
+
+            }
+
+            else {
+
+                stockStatus.className =
+                    "stock-status in-stock";
+
+                stockStatus.textContent =
+                    `✓ In stock: ${stock} unit(s) available.`;
+
+            }
+
+        }
+
+
+        // =====================================================
+        // LOAD PRODUCT
+        // =====================================================
+
+        async function loadProduct() {
+
+            try {
+
+                const product =
+                    await apiRequest(
+                        `/api/products/${productId}`
+                    );
+
+
+                await loadCategories(
+                    product.category
+                        ? product.category.id
+                        : null
+                );
+
+
+                productName.value =
+                    product.name || "";
+
+
+                productDescription.value =
+                    product.description || "";
+
+
+                productPrice.value =
+                    product.price ?? "";
+
+
+                productDiscount.value =
+                    product.discount_price ?? "";
+
+
+                productStock.value =
+                    product.stock ?? 0;
+
+
+                productFeatured.checked =
+                    Boolean(
+                        product.is_featured
+                    );
+
+
+                if (
+                    product.primary_image
+                ) {
+
+                    currentImage.src =
+                        product.primary_image;
+
+                    currentImage.alt =
+                        product.name;
+
+                }
+                else {
+
+                    currentImageSection
+                        .style.display =
+                        "none";
+
+                }
+
+
+                updateStockStatus();
+
+
+                loadingMessage.style.display =
+                    "none";
+
+                form.style.display =
+                    "grid";
+
+            }
+            catch (error) {
+
+                loadingMessage.style.display =
+                    "none";
+
+                showError(
+                    error.message ||
+                    "Failed to load product."
+                );
+
+            }
+
+        }
+
+
+        // =====================================================
+        // IMAGE PREVIEW
+        // =====================================================
+
+        productImage.addEventListener(
+            "change",
+            function () {
+
+                const file =
+                    productImage.files[0];
+
+
+                if (!file) {
+
+                    return;
+
+                }
+
+
+                const allowedTypes = [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp"
+                ];
+
+
+                if (
+                    !allowedTypes.includes(
+                        file.type
+                    )
+                ) {
+
+                    showError(
+                        "Please select a JPG, PNG or WEBP image."
+                    );
+
+                    productImage.value =
+                        "";
+
+                    return;
+
+                }
+
+
+                const imageURL =
+                    URL.createObjectURL(
+                        file
+                    );
+
+
+                newImagePreview.src =
+                    imageURL;
+
+                newImagePreview.style.display =
+                    "block";
+
+
+                imageUploadContent.style.display =
+                    "none";
+
+
+                removeImageButton.style.display =
+                    "block";
+
+
+                errorMessage.style.display =
+                    "none";
+
+            }
+        );
+
+
+        // =====================================================
+        // REMOVE NEW IMAGE
+        // =====================================================
+
+        removeImageButton.addEventListener(
+            "click",
+            function () {
+
+                productImage.value =
+                    "";
+
+                newImagePreview.src =
+                    "";
+
+                newImagePreview.style.display =
+                    "none";
+
+                imageUploadContent.style.display =
+                    "block";
+
+                removeImageButton.style.display =
+                    "none";
+
+            }
+        );
+
+
+        // =====================================================
+        // STOCK CHANGE
+        // =====================================================
+
+        productStock.addEventListener(
+            "input",
+            updateStockStatus
+        );
+
+
+        // =====================================================
+        // SUBMIT FORM
+        // =====================================================
+
+        form.addEventListener(
+            "submit",
+            async function (event) {
+
+                event.preventDefault();
+
+
+                errorMessage.style.display =
+                    "none";
+
+                successMessage.style.display =
+                    "none";
+
+
+                const name =
+                    productName.value.trim();
+
+                const price =
+                    Number(
+                        productPrice.value
+                    );
+
+                const discountValue =
+                    productDiscount.value.trim();
+
+                const stock =
+                    Number(
+                        productStock.value
+                    );
+
+
+                // -------------------------------------------------
+                // VALIDATION
+                // -------------------------------------------------
+
+                if (!name) {
+
+                    showError(
+                        "Product name is required."
+                    );
+
+                    productName.focus();
+
+                    return;
+
+                }
+
+
+                if (
+                    Number.isNaN(price) ||
+                    price < 0
+                ) {
+
+                    showError(
+                        "Please enter a valid price."
+                    );
+
+                    productPrice.focus();
+
+                    return;
+
+                }
+
+
+                if (
+                    Number.isNaN(stock) ||
+                    stock < 0 ||
+                    !Number.isInteger(stock)
+                ) {
+
+                    showError(
+                        "Stock must be a valid whole number."
+                    );
+
+                    productStock.focus();
+
+                    return;
+
+                }
+
+
+                if (
+                    discountValue !== ""
+                ) {
+
+                    const discount =
+                        Number(
+                            discountValue
+                        );
+
+
+                    if (
+                        Number.isNaN(discount) ||
+                        discount < 0
+                    ) {
+
+                        showError(
+                            "Please enter a valid discount price."
+                        );
+
+                        productDiscount.focus();
+
+                        return;
+
+                    }
+
+                }
+
+
+                if (
+                    productCategory.value === ""
+                ) {
+
+                    showError(
+                        "Please select a category."
+                    );
+
+                    productCategory.focus();
+
+                    return;
+
+                }
+
+
+                // -------------------------------------------------
+                // FORM DATA
+                // -------------------------------------------------
+
+                const formData =
+                    new FormData();
+
+
+                formData.append(
+                    "name",
+                    name
+                );
+
+
+                formData.append(
+                    "description",
+                    productDescription.value.trim()
+                );
+
+
+                formData.append(
+                    "category_id",
+                    productCategory.value
+                );
+
+
+                formData.append(
+                    "price",
+                    productPrice.value
+                );
+
+
+                formData.append(
+                    "discount_price",
+                    discountValue
+                );
+
+
+                formData.append(
+                    "stock",
+                    productStock.value
+                );
+
+
+                formData.append(
+                    "is_featured",
+                    productFeatured.checked
+                        ? "true"
+                        : "false"
+                );
+
+
+                // -------------------------------------------------
+                // IMAGE
+                // -------------------------------------------------
+
+                if (
+                    productImage.files.length > 0
+                ) {
+
+                    formData.append(
+                        "image",
+                        productImage.files[0]
+                    );
+
+                }
+
+
+                // -------------------------------------------------
+                // DISABLE BUTTON
+                // -------------------------------------------------
+
+                saveProductButton.disabled =
+                    true;
+
+                saveButtonText.textContent =
+                    "Saving...";
+
+
+                try {
+
+                    const response =
+                        await apiRequest(
+                            `/api/admin/products/${productId}`,
+                            {
+                                method: "PUT",
+                                body: formData
+                            }
+                        );
+
+
+                    showSuccess(
+                        response.message ||
+                        "Product updated successfully."
+                    );
+
+
+                    // Wait briefly so admin can see success
+                    setTimeout(
+                        function () {
+
+                            window.location.href =
+                                "/admin/products";
+
+                        },
+                        1000
+                    );
+
+
+                }
+                catch (error) {
+
+                    showError(
+                        error.message ||
+                        "Failed to update product."
+                    );
+
+
+                    saveProductButton.disabled =
+                        false;
+
+                    saveButtonText.textContent =
+                        "Save Changes";
+
+                }
+
+            }
+        );
+
+
+        // =====================================================
+        // START
+        // =====================================================
+
+        await loadProduct();
+
+    }
+);
+
+</script>
+
+{% endblock %}

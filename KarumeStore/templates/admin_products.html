@@ -1,0 +1,1546 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+Product Management | KarumeStore
+{% endblock %}
+
+{% block content %}
+
+<main class="page product-management-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+         ===================================================== -->
+
+    <section class="product-management-header">
+
+        <div class="product-header-content">
+
+            <span class="eyebrow">
+                STORE MANAGEMENT
+            </span>
+
+            <h1>
+                Product Management
+            </h1>
+
+            <p>
+                Manage your products, inventory and store catalog
+                from one place.
+            </p>
+
+        </div>
+
+
+        <div class="product-header-actions">
+
+            <a
+                href="/admin"
+                class="product-secondary-button"
+            >
+                ← Dashboard
+            </a>
+
+
+            <a
+                href="/admin/products/new"
+                class="product-primary-button"
+            >
+                + Add Product
+            </a>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         MESSAGE
+         ===================================================== -->
+
+    <div
+        id="product-message"
+        class="product-message"
+        role="alert"
+        aria-live="polite"
+    ></div>
+
+
+
+    <!-- =====================================================
+         PRODUCTS OVERVIEW
+         ===================================================== -->
+
+    <section class="product-overview">
+
+        <div class="product-overview-card">
+
+            <div class="overview-icon">
+                🛍️
+            </div>
+
+            <div>
+
+                <span>
+                    TOTAL PRODUCTS
+                </span>
+
+                <strong id="total-products">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="product-overview-card">
+
+            <div class="overview-icon">
+                📦
+            </div>
+
+            <div>
+
+                <span>
+                    IN STOCK
+                </span>
+
+                <strong id="in-stock-products">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="product-overview-card">
+
+            <div class="overview-icon">
+                ⚠️
+            </div>
+
+            <div>
+
+                <span>
+                    LOW STOCK
+                </span>
+
+                <strong id="low-stock-products">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="product-overview-card">
+
+            <div class="overview-icon">
+                🔴
+            </div>
+
+            <div>
+
+                <span>
+                    OUT OF STOCK
+                </span>
+
+                <strong id="out-stock-products">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         SEARCH AND FILTER
+         ===================================================== -->
+
+    <section class="product-tools">
+
+        <div class="product-search-wrapper">
+
+            <span class="search-icon">
+                🔎
+            </span>
+
+            <input
+                type="text"
+                id="product-search"
+                placeholder="Search products..."
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <div class="product-filter-wrapper">
+
+            <select id="category-filter">
+
+                <option value="">
+                    All Categories
+                </option>
+
+            </select>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         PRODUCT LIST
+         ===================================================== -->
+
+    <section class="product-list-section">
+
+        <div class="product-list-header">
+
+            <div>
+
+                <span class="section-label">
+                    INVENTORY
+                </span>
+
+                <h2>
+                    Store Products
+                </h2>
+
+                <p>
+                    View and manage every product available
+                    in your store.
+                </p>
+
+            </div>
+
+
+            <span
+                id="product-count"
+                class="product-count"
+            >
+                0 products
+            </span>
+
+        </div>
+
+
+
+        <!-- =================================================
+             PRODUCTS
+             ================================================= -->
+
+        <div
+            id="products-container"
+            class="products-container"
+        >
+
+            <div class="products-loading">
+
+                <div class="loading-spinner"></div>
+
+                <p>
+                    Loading products...
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+{% endblock %}
+
+
+
+{% block scripts %}
+
+<script>
+
+/* =========================================================
+   GLOBAL PRODUCTS
+   ========================================================= */
+
+let allProducts = [];
+
+
+
+/* =========================================================
+   PAGE LOAD
+   ========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initializeProductManagement
+);
+
+
+
+/* =========================================================
+   INITIALIZE PAGE
+   ========================================================= */
+
+async function initializeProductManagement() {
+
+    try {
+
+        await loadCategories();
+
+        await loadProducts();
+
+        setupProductSearch();
+
+    } catch (error) {
+
+        console.error(
+            "Product management initialization error:",
+            error
+        );
+
+        showProductMessage(
+            error.message ||
+            "Unable to initialize product management.",
+            "error"
+        );
+
+    }
+
+}
+
+
+
+/* =========================================================
+   LOAD CATEGORIES
+   ========================================================= */
+
+async function loadCategories() {
+
+    const data = await apiRequest(
+        "/api/categories"
+    );
+
+
+    const categoryFilter =
+        document.getElementById(
+            "category-filter"
+        );
+
+
+    if (!categoryFilter) {
+        return;
+    }
+
+
+    if (!Array.isArray(data)) {
+        return;
+    }
+
+
+    categoryFilter.innerHTML = `
+
+        <option value="">
+            All Categories
+        </option>
+
+    `;
+
+
+    data.forEach(
+        category => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                category.id;
+
+
+            option.textContent =
+                category.name;
+
+
+            categoryFilter.appendChild(
+                option
+            );
+
+        }
+    );
+
+}
+
+
+
+/* =========================================================
+   LOAD PRODUCTS
+   ========================================================= */
+
+async function loadProducts() {
+
+    const container =
+        document.getElementById(
+            "products-container"
+        );
+
+
+    if (container) {
+
+        container.innerHTML = `
+
+            <div class="products-loading">
+
+                <div class="loading-spinner"></div>
+
+                <p>
+                    Loading products...
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+
+    const data = await apiRequest(
+        "/api/admin/products"
+    );
+
+
+    if (!data?.success) {
+
+        showProductMessage(
+            data?.message ||
+            "Unable to load products.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    allProducts =
+        Array.isArray(data.products)
+            ? data.products
+            : [];
+
+
+    updateOverview(
+        allProducts
+    );
+
+
+    displayProducts(
+        allProducts
+    );
+
+}
+
+
+
+/* =========================================================
+   UPDATE OVERVIEW
+   ========================================================= */
+
+function updateOverview(
+    products
+) {
+
+    const total =
+        products.length;
+
+
+    const inStock =
+        products.filter(
+            product =>
+                Number(product.stock) > 5
+        ).length;
+
+
+    const lowStock =
+        products.filter(
+            product => {
+
+                const stock =
+                    Number(product.stock) || 0;
+
+                return (
+                    stock > 0 &&
+                    stock <= 5
+                );
+
+            }
+        ).length;
+
+
+    const outOfStock =
+        products.filter(
+            product =>
+                Number(product.stock) <= 0
+        ).length;
+
+
+    const totalElement =
+        document.getElementById(
+            "total-products"
+        );
+
+
+    const inStockElement =
+        document.getElementById(
+            "in-stock-products"
+        );
+
+
+    const lowStockElement =
+        document.getElementById(
+            "low-stock-products"
+        );
+
+
+    const outStockElement =
+        document.getElementById(
+            "out-stock-products"
+        );
+
+
+    if (totalElement) {
+
+        totalElement.textContent =
+            total;
+
+    }
+
+
+    if (inStockElement) {
+
+        inStockElement.textContent =
+            inStock;
+
+    }
+
+
+    if (lowStockElement) {
+
+        lowStockElement.textContent =
+            lowStock;
+
+    }
+
+
+    if (outStockElement) {
+
+        outStockElement.textContent =
+            outOfStock;
+
+    }
+
+}
+
+
+
+/* =========================================================
+   DISPLAY PRODUCTS
+   ========================================================= */
+
+function displayProducts(
+    products
+) {
+
+    const container =
+        document.getElementById(
+            "products-container"
+        );
+
+
+    const count =
+        document.getElementById(
+            "product-count"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    if (count) {
+
+        count.textContent =
+            `${products.length} ${
+                products.length === 1
+                    ? "product"
+                    : "products"
+            }`;
+
+    }
+
+
+    if (!products.length) {
+
+        container.innerHTML = `
+
+            <div class="empty-products">
+
+                <div class="empty-products-icon">
+                    🛍️
+                </div>
+
+                <h3>
+                    No products found
+                </h3>
+
+                <p>
+                    There are no products matching
+                    your search or filter.
+                </p>
+
+                <a
+                    href="/admin/products/new"
+                    class="product-primary-button"
+                >
+                    + Add Product
+                </a>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        products
+        .map(
+            product =>
+                createProductCard(
+                    product
+                )
+        )
+        .join("");
+
+}
+
+
+
+/* =========================================================
+   CREATE PRODUCT CARD
+   ========================================================= */
+
+function createProductCard(
+    product
+) {
+
+    const stock =
+        Number(product.stock) || 0;
+
+
+    let stockClass =
+        "stock-good";
+
+
+    let stockText =
+        `${stock} in stock`;
+
+
+    if (stock <= 0) {
+
+        stockClass =
+            "stock-out";
+
+        stockText =
+            "Out of stock";
+
+    }
+
+    else if (stock <= 5) {
+
+        stockClass =
+            "stock-low";
+
+        stockText =
+            `${stock} left`;
+
+    }
+
+
+
+    /* =====================================================
+       PRODUCT IMAGE
+       ===================================================== */
+
+    const image =
+        product.primary_image ||
+        "/static/images/no-image.jpg";
+
+
+
+    /* =====================================================
+       CATEGORY
+       ===================================================== */
+
+    const categoryName =
+        product.category
+            ? product.category.name
+            : "No category";
+
+
+
+    /* =====================================================
+       PRICE
+       ===================================================== */
+
+    const regularPrice =
+        formatTZS(
+            product.price
+        );
+
+
+    let priceHTML = `
+
+        <strong class="product-price">
+            ${regularPrice}
+        </strong>
+
+    `;
+
+
+    if (
+        product.discount_price !== null &&
+        product.discount_price !== undefined &&
+        product.discount_price !== ""
+    ) {
+
+        priceHTML = `
+
+            <div class="product-price-group">
+
+                <del>
+                    ${regularPrice}
+                </del>
+
+                <strong class="product-sale-price">
+                    ${formatTZS(
+                        product.discount_price
+                    )}
+                </strong>
+
+            </div>
+
+        `;
+
+    }
+
+
+
+    /* =====================================================
+       SAFE PRODUCT NAME
+       ===================================================== */
+
+    const encodedProductName =
+        encodeURIComponent(
+            product.name || ""
+        );
+
+
+
+    /* =====================================================
+       PRODUCT STATUS
+       ===================================================== */
+
+    const isActive =
+        product.is_active !== false;
+
+
+    const statusHTML =
+        isActive
+
+        ? `
+
+            <span
+                class="product-status active"
+            >
+                ● Active
+            </span>
+
+        `
+
+        : `
+
+            <span
+                class="product-status inactive"
+            >
+                ● Inactive
+            </span>
+
+        `;
+
+
+
+    /* =====================================================
+       STATUS ACTION
+       ===================================================== */
+
+    const statusButton =
+        isActive
+
+        ? `
+
+            <button
+                type="button"
+                class="deactivate-product-button"
+                onclick="
+                    changeProductStatus(
+                        ${product.id},
+                        false,
+                        decodeURIComponent('${encodedProductName}')
+                    )
+                "
+            >
+                ⏸️ Deactivate
+            </button>
+
+        `
+
+        : `
+
+            <button
+                type="button"
+                class="activate-product-button"
+                onclick="
+                    changeProductStatus(
+                        ${product.id},
+                        true,
+                        decodeURIComponent('${encodedProductName}')
+                    )
+                "
+            >
+                ▶️ Activate
+            </button>
+
+        `;
+
+
+
+    return `
+
+        <article
+            class="product-card
+            ${isActive ? "" : "product-card-inactive"}"
+        >
+
+
+            <!-- =========================================
+                 PRODUCT IMAGE
+                 ========================================= -->
+
+            <div class="product-card-image">
+
+                <img
+                    src="${escapeHtml(image)}"
+                    alt="${escapeHtml(
+                        product.name || "Product"
+                    )}"
+                    onerror="
+                        this.onerror=null;
+                        this.src='/static/images/no-image.jpg';
+                    "
+                >
+
+
+                ${
+                    product.is_featured
+                    ? `
+                        <span class="featured-badge">
+                            ⭐ Featured
+                        </span>
+                    `
+                    : ""
+                }
+
+
+                <div class="product-status-overlay">
+
+                    ${statusHTML}
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =========================================
+                 PRODUCT INFORMATION
+                 ========================================= -->
+
+            <div class="product-card-content">
+
+
+                <div class="product-card-top">
+
+                    <div>
+
+                        <span class="product-category">
+
+                            ${escapeHtml(
+                                categoryName
+                            )}
+
+                        </span>
+
+
+                        <h3>
+
+                            ${escapeHtml(
+                                product.name || ""
+                            )}
+
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- DESCRIPTION -->
+
+                <p class="product-description">
+
+                    ${escapeHtml(
+                        product.description ||
+                        "No description available."
+                    )}
+
+                </p>
+
+
+
+                <!-- PRICE -->
+
+                <div class="product-price-row">
+
+                    ${priceHTML}
+
+                </div>
+
+
+
+                <!-- STOCK -->
+
+                <div class="product-stock-row">
+
+                    <span>
+                        STOCK
+                    </span>
+
+
+                    <strong
+                        class="${stockClass}"
+                    >
+                        ${stockText}
+                    </strong>
+
+                </div>
+
+
+
+                <!-- ACTIONS -->
+
+                <div class="product-card-actions">
+
+
+                    <!-- EDIT -->
+
+                    <a
+                        href="/admin/products/${product.id}/edit"
+                        class="edit-product-button"
+                    >
+                        ✏️ Edit
+                    </a>
+
+
+
+                    <!-- ACTIVATE / DEACTIVATE -->
+
+                    ${statusButton}
+
+
+
+                    <!-- DELETE -->
+
+                    <button
+                        type="button"
+                        class="delete-product-button"
+                        onclick="
+                            deleteProduct(
+                                ${product.id},
+                                decodeURIComponent('${encodedProductName}')
+                            )
+                        "
+                    >
+                        🗑️ Delete
+                    </button>
+
+
+                </div>
+
+
+            </div>
+
+        </article>
+
+    `;
+
+}
+
+
+
+/* =========================================================
+   CHANGE PRODUCT STATUS
+   ========================================================= */
+
+async function changeProductStatus(
+    productId,
+    activate,
+    productName
+) {
+
+    const action =
+        activate
+            ? "activate"
+            : "deactivate";
+
+
+    const confirmationMessage =
+        activate
+
+        ? `Are you sure you want to activate "${productName}"?`
+
+        : `Are you sure you want to deactivate "${productName}"?
+
+The product will no longer be available to customers.
+Existing order history will remain unchanged.`;
+
+
+    const confirmed =
+        confirm(
+            confirmationMessage
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+
+    /* =====================================================
+       FIND CURRENT PRODUCT CARD BUTTONS
+       ===================================================== */
+
+    const buttons =
+        document.querySelectorAll(
+            ".deactivate-product-button, " +
+            ".activate-product-button"
+        );
+
+
+    buttons.forEach(
+        button => {
+
+            button.disabled =
+                true;
+
+        }
+    );
+
+
+
+    try {
+
+        const data =
+            await apiRequest(
+                `/api/admin/products/${productId}/status`,
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            is_active:
+                                activate
+                        })
+                }
+            );
+
+
+
+        if (data?.success) {
+
+            showProductMessage(
+                data.message ||
+                (
+                    activate
+                        ? "Product activated successfully."
+                        : "Product deactivated successfully."
+                ),
+                "success"
+            );
+
+
+            /*
+             * Reload products so:
+             *
+             * Active -> Deactivate
+             * Inactive -> Activate
+             */
+
+            await loadProducts();
+
+
+            return;
+
+        }
+
+
+
+        showProductMessage(
+            data?.message ||
+            `Unable to ${action} product.`,
+            "error"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "CHANGE PRODUCT STATUS ERROR:",
+            error
+        );
+
+
+        showProductMessage(
+            error?.message ||
+            `Unable to ${action} product.`,
+            "error"
+        );
+
+    }
+
+    finally {
+
+        const buttons =
+            document.querySelectorAll(
+                ".deactivate-product-button, " +
+                ".activate-product-button"
+            );
+
+
+        buttons.forEach(
+            button => {
+
+                button.disabled =
+                    false;
+
+            }
+        );
+
+    }
+
+}
+
+
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+function setupProductSearch() {
+
+    const searchInput =
+        document.getElementById(
+            "product-search"
+        );
+
+
+    const categoryFilter =
+        document.getElementById(
+            "category-filter"
+        );
+
+
+    if (
+        !searchInput ||
+        !categoryFilter
+    ) {
+
+        return;
+
+    }
+
+
+    searchInput.addEventListener(
+        "input",
+        filterProducts
+    );
+
+
+    categoryFilter.addEventListener(
+        "change",
+        filterProducts
+    );
+
+}
+
+
+
+/* =========================================================
+   FILTER PRODUCTS
+   ========================================================= */
+
+function filterProducts() {
+
+    const searchInput =
+        document.getElementById(
+            "product-search"
+        );
+
+
+    const categoryFilter =
+        document.getElementById(
+            "category-filter"
+        );
+
+
+    if (
+        !searchInput ||
+        !categoryFilter
+    ) {
+
+        return;
+
+    }
+
+
+    const search =
+        searchInput.value
+        .toLowerCase()
+        .trim();
+
+
+    const category =
+        categoryFilter.value;
+
+
+    const filtered =
+        allProducts.filter(
+            product => {
+
+                const name =
+                    (
+                        product.name ||
+                        ""
+                    )
+                    .toLowerCase();
+
+
+                const description =
+                    (
+                        product.description ||
+                        ""
+                    )
+                    .toLowerCase();
+
+
+                const matchesSearch =
+                    !search ||
+                    name.includes(search) ||
+                    description.includes(search);
+
+
+                const matchesCategory =
+                    !category ||
+                    String(
+                        product.category?.id
+                    ) === String(category);
+
+
+                return (
+                    matchesSearch &&
+                    matchesCategory
+                );
+
+            }
+        );
+
+
+    displayProducts(
+        filtered
+    );
+
+}
+
+
+
+/* =========================================================
+   SHOW MESSAGE
+   ========================================================= */
+
+function showProductMessage(
+    message,
+    type
+) {
+
+    const element =
+        document.getElementById(
+            "product-message"
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    if (element._messageTimeout) {
+
+        clearTimeout(
+            element._messageTimeout
+        );
+
+    }
+
+
+    element.textContent =
+        message;
+
+
+    element.className =
+        `product-message ${type}`;
+
+
+    const duration =
+        type === "error"
+            ? 6000
+            : 4000;
+
+
+    element._messageTimeout =
+        setTimeout(
+            () => {
+
+                element.textContent =
+                    "";
+
+                element.className =
+                    "product-message";
+
+            },
+            duration
+        );
+
+}
+
+
+
+/* =========================================================
+   DELETE PRODUCT
+   ========================================================= */
+
+async function deleteProduct(
+    productId,
+    productName
+) {
+
+    console.log(
+        "DELETE CLICKED:",
+        productId,
+        productName
+    );
+
+
+    const confirmed =
+        confirm(
+            `Are you sure you want to delete "${productName}"?`
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    const buttons =
+        document.querySelectorAll(
+            ".delete-product-button"
+        );
+
+
+    buttons.forEach(
+        button => {
+
+            const text =
+                button.textContent
+                .trim();
+
+
+            if (
+                text.includes("Delete")
+            ) {
+
+                button.disabled =
+                    true;
+
+            }
+
+        }
+    );
+
+
+    try {
+
+        console.log(
+            "Sending DELETE request:",
+            `/api/admin/products/${productId}`
+        );
+
+
+        const data =
+            await apiRequest(
+                `/api/admin/products/${productId}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        console.log(
+            "DELETE RESPONSE:",
+            data
+        );
+
+
+        if (data?.success) {
+
+            showProductMessage(
+                data.message ||
+                `Product "${productName}" deleted successfully.`,
+                "success"
+            );
+
+
+            await loadProducts();
+
+            return;
+
+        }
+
+
+        showProductMessage(
+            data?.message ||
+            "Unable to delete product.",
+            "error"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "DELETE PRODUCT ERROR:",
+            error
+        );
+
+
+        let message =
+            error?.message ||
+            "Unable to delete product.";
+
+
+        const lowerMessage =
+            message.toLowerCase();
+
+
+        if (
+            lowerMessage.includes(
+                "currently in a customer's cart"
+            )
+        ) {
+
+            message =
+                "🛒 Cannot delete this product. " +
+                "It is currently in a customer's cart.";
+
+        }
+
+        else if (
+            lowerMessage.includes(
+                "already part of an order history"
+            )
+        ) {
+
+            message =
+                "📦 Cannot delete this product. " +
+                "It is already part of an order history.";
+
+        }
+
+
+        showProductMessage(
+            message,
+            "error"
+        );
+
+    }
+
+    finally {
+
+        const buttons =
+            document.querySelectorAll(
+                ".delete-product-button"
+            );
+
+
+        buttons.forEach(
+            button => {
+
+                button.disabled =
+                    false;
+
+            }
+        );
+
+    }
+
+}
+
+</script>
+
+{% endblock %}
+

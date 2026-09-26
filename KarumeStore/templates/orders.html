@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}My Orders | KarumeStore{% endblock %}
+{% block content %}
+<main class="page">
+    <div class="page-heading"><span class="eyebrow">ACCOUNT</span><h1>My Orders</h1></div>
+    <div id="orders-container"><p class="loading">Loading orders...</p></div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", loadOrders);
+
+async function loadOrders() {
+    const container = document.getElementById("orders-container");
+    const data = await apiRequest("/api/orders");
+    if (!data?.success) {
+        container.innerHTML = `<div class="empty-products" style="display:block"><h2>Please login</h2><a class="primary-btn" href="/login">Login</a></div>`;
+        return;
+    }
+    if (!data.orders.length) {
+        container.innerHTML = `<div class="empty-products" style="display:block"><h2>No orders yet</h2><a class="primary-btn" href="/products">Shop Now</a></div>`;
+        return;
+    }
+
+    container.innerHTML = data.orders.map(order => `
+        <div class="order-card">
+            <div class="order-top">
+                <div><strong>${escapeHtml(order.order_number)}</strong><small>${new Date(order.created_at).toLocaleString()}</small></div>
+                <span class="status">${escapeHtml(order.status.replaceAll("_", " "))}</span>
+            </div>
+            <div class="order-items">
+                ${order.items.map(i => `<p>${escapeHtml(i.product_name)} × ${i.quantity} <strong>${formatTZS(i.total)}</strong></p>`).join("")}
+            </div>
+            <div class="order-total">Total: ${formatTZS(order.total)}</div>
+            ${order.status === "DELIVERED" ? `<button class="primary-btn" onclick="confirmReceived(${order.id})">cornfirm received</button>` : ""}
+            ${!order.delivery_location_shared && !["DELIVERED", "RECEIVED", "REJECTED", "CANCELLED"].includes(order.status) ? `<button class="secondary-btn" onclick="shareLocation(${order.id})">Share Delivery Location</button>` : ""}
+            ${order.delivery_location_shared ? `<p class="success-message">Location shared with delivery team.</p>` : ""}
+            ${order.status === "RECEIVED" ? `<p class="success-message"> Thankyou for your confirmation .</p>` : ""}
+        </div>
+    `).join("");
+}
+
+function shareLocation(id) {
+    if (!navigator.geolocation) {
+        alert("Location sharing is not supported by this browser.");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async position => {
+        const data = await apiRequest(`/api/orders/${id}/location`, {
+            method: "POST",
+            body: JSON.stringify({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            })
+        });
+        alert(data?.message || "Location shared.");
+        loadOrders();
+    }, () => alert("Location was not shared."));
+}
+
+async function confirmReceived(id) {
+    const data = await apiRequest(`/api/orders/${id}/received`, {method: "POST"});
+    alert(data?.message || "Done");
+    loadOrders();
+}
+</script>
+{% endblock %}

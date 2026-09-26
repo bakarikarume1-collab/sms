@@ -1,0 +1,1229 @@
+{% extends "base.html" %}
+
+{% block title %}Sales & Revenue - KarumeStore{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* =========================================================
+   SALES PAGE
+========================================================= */
+
+.sales-page {
+    max-width: 1450px;
+    margin: 0 auto;
+    padding: 30px 22px 60px;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.sales-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.sales-title h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+    color: #111827;
+}
+
+.sales-title p {
+    margin: 7px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.sales-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.sales-year-select {
+    height: 43px;
+    min-width: 125px;
+    padding: 0 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #fff;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 700;
+    outline: none;
+    cursor: pointer;
+}
+
+.sales-refresh {
+    height: 43px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 10px;
+    background: #111827;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* =========================================================
+   KPI CARDS
+========================================================= */
+
+.sales-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 17px;
+    margin-bottom: 25px;
+}
+
+.sales-kpi {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 21px;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, .035);
+}
+
+.sales-kpi-label {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 9px;
+}
+
+.sales-kpi-value {
+    font-size: 27px;
+    font-weight: 800;
+    color: #111827;
+}
+
+.sales-kpi-subtitle {
+    margin-top: 7px;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* =========================================================
+   CHART CARDS
+========================================================= */
+
+.sales-chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.sales-chart-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 17px;
+    padding: 21px;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, .035);
+}
+
+.sales-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.sales-chart-header h2 {
+    margin: 0;
+    font-size: 17px;
+    color: #111827;
+}
+
+.sales-chart-header span {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 320px;
+}
+
+/* =========================================================
+   TABLE CARD
+========================================================= */
+
+.sales-table-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 17px;
+    overflow: hidden;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, .035);
+}
+
+.sales-table-header {
+    padding: 21px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 1px solid #eef0f3;
+}
+
+.sales-table-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #111827;
+}
+
+.sales-table-header span {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.sales-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.sales-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+}
+
+.sales-table th {
+    padding: 13px 18px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #6b7280;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.sales-table td {
+    padding: 15px 18px;
+    font-size: 13px;
+    color: #374151;
+    border-bottom: 1px solid #f0f1f3;
+}
+
+.sales-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.sales-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.month-name {
+    font-weight: 750;
+    color: #111827;
+}
+
+.revenue-value {
+    font-weight: 800;
+    color: #111827;
+}
+
+.orders-count {
+    font-weight: 700;
+}
+
+.performance {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #4b5563;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.sales-loading {
+    display: none;
+    padding: 45px 20px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.sales-loading.active {
+    display: block;
+}
+
+.sales-spinner {
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 12px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #111827;
+    border-radius: 50%;
+    animation: salesSpin .8s linear infinite;
+}
+
+@keyframes salesSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.sales-error {
+    display: none;
+    padding: 16px;
+    margin-bottom: 20px;
+    border-radius: 11px;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    font-size: 13px;
+}
+
+.sales-error.active {
+    display: block;
+}
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+body.dark-mode .sales-title h1,
+body.dark-mode .sales-chart-header h2,
+body.dark-mode .sales-table-header h2,
+body.dark-mode .sales-kpi-value,
+body.dark-mode .month-name,
+body.dark-mode .revenue-value {
+    color: #f9fafb;
+}
+
+body.dark-mode .sales-title p,
+body.dark-mode .sales-chart-header span,
+body.dark-mode .sales-table-header span,
+body.dark-mode .sales-kpi-label,
+body.dark-mode .sales-kpi-subtitle,
+body.dark-mode .sales-table th {
+    color: #9ca3af;
+}
+
+body.dark-mode .sales-kpi,
+body.dark-mode .sales-chart-card,
+body.dark-mode .sales-table-card {
+    background: #111827;
+    border-color: #263244;
+    box-shadow: none;
+}
+
+body.dark-mode .sales-year-select {
+    background: #0f172a;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+body.dark-mode .sales-table th {
+    background: #0f172a;
+    border-color: #263244;
+}
+
+body.dark-mode .sales-table td {
+    color: #d1d5db;
+    border-color: #263244;
+}
+
+body.dark-mode .sales-table tbody tr:hover {
+    background: #172033;
+}
+
+body.dark-mode .performance {
+    background: #1f2937;
+    color: #d1d5db;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+
+    .sales-kpis {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .sales-chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+
+    .sales-page {
+        padding: 22px 14px 45px;
+    }
+
+    .sales-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .sales-actions {
+        width: 100%;
+    }
+
+    .sales-year-select,
+    .sales-refresh {
+        flex: 1;
+    }
+
+    .sales-title h1 {
+        font-size: 25px;
+    }
+
+    .sales-kpis {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-wrapper {
+        height: 270px;
+    }
+}
+
+</style>
+
+
+<div class="sales-page">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="sales-header">
+
+        <div class="sales-title">
+
+            <h1>
+                Sales & Revenue
+            </h1>
+
+            <p>
+                Monitor KarumeStore sales performance and revenue.
+            </p>
+
+        </div>
+
+
+        <div class="sales-actions">
+
+            <select
+                id="yearSelector"
+                class="sales-year-select"
+                onchange="loadSalesData()"
+            >
+            </select>
+
+            <button
+                class="sales-refresh"
+                onclick="loadSalesData()"
+            >
+                ↻ Refresh
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         ERROR
+    ====================================================== -->
+
+    <div
+        id="salesError"
+        class="sales-error"
+    ></div>
+
+
+    <!-- =====================================================
+         KPI CARDS
+    ====================================================== -->
+
+    <div class="sales-kpis">
+
+        <div class="sales-kpi">
+
+            <div class="sales-kpi-label">
+                Total Revenue
+            </div>
+
+            <div
+                id="totalRevenue"
+                class="sales-kpi-value"
+            >
+                TSh 0
+            </div>
+
+            <div class="sales-kpi-subtitle">
+                Completed orders
+            </div>
+
+        </div>
+
+
+        <div class="sales-kpi">
+
+            <div class="sales-kpi-label">
+                Total Orders
+            </div>
+
+            <div
+                id="totalOrders"
+                class="sales-kpi-value"
+            >
+                0
+            </div>
+
+            <div class="sales-kpi-subtitle">
+                Delivered + received
+            </div>
+
+        </div>
+
+
+        <div class="sales-kpi">
+
+            <div class="sales-kpi-label">
+                Average Order
+            </div>
+
+            <div
+                id="averageOrder"
+                class="sales-kpi-value"
+            >
+                TSh 0
+            </div>
+
+            <div class="sales-kpi-subtitle">
+                Average completed order
+            </div>
+
+        </div>
+
+
+        <div class="sales-kpi">
+
+            <div class="sales-kpi-label">
+                Active Months
+            </div>
+
+            <div
+                id="activeMonths"
+                class="sales-kpi-value"
+            >
+                0
+            </div>
+
+            <div class="sales-kpi-subtitle">
+                Months with sales
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         CHARTS
+    ====================================================== -->
+
+    <div class="sales-chart-grid">
+
+
+        <!-- REVENUE -->
+
+        <div class="sales-chart-card">
+
+            <div class="sales-chart-header">
+
+                <h2>
+                    Monthly Revenue
+                </h2>
+
+                <span id="revenueChartYear">
+                    -
+                </span>
+
+            </div>
+
+            <div class="chart-wrapper">
+
+                <canvas id="revenueChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- ORDERS -->
+
+        <div class="sales-chart-card">
+
+            <div class="sales-chart-header">
+
+                <h2>
+                    Monthly Orders
+                </h2>
+
+                <span id="ordersChartYear">
+                    -
+                </span>
+
+            </div>
+
+            <div class="chart-wrapper">
+
+                <canvas id="ordersChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MONTHLY TABLE
+    ====================================================== -->
+
+    <div class="sales-table-card">
+
+        <div class="sales-table-header">
+
+            <h2>
+                Monthly Sales Report
+            </h2>
+
+            <span id="tableYear">
+                -
+            </span>
+
+        </div>
+
+
+        <div class="sales-loading" id="salesLoading">
+
+            <div class="sales-spinner"></div>
+
+            Loading sales data...
+
+        </div>
+
+
+        <div class="sales-table-wrapper">
+
+            <table class="sales-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Month
+                        </th>
+
+                        <th>
+                            Orders
+                        </th>
+
+                        <th>
+                            Revenue
+                        </th>
+
+                        <th>
+                            Average Order
+                        </th>
+
+                        <th>
+                            Performance
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="salesTableBody">
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     CHART.JS
+========================================================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<script>
+
+/* =========================================================
+   GLOBALS
+========================================================= */
+
+let revenueChart = null;
+let ordersChart = null;
+
+
+/* =========================================================
+   YEAR SELECTOR
+========================================================= */
+
+function setupYearSelector() {
+
+    const selector =
+        document.getElementById("yearSelector");
+
+    const currentYear =
+        new Date().getFullYear();
+
+    selector.innerHTML = "";
+
+    for (
+        let year = currentYear;
+        year >= currentYear - 5;
+        year--
+    ) {
+
+        const option =
+            document.createElement("option");
+
+        option.value = year;
+        option.textContent = year;
+
+        selector.appendChild(option);
+    }
+
+    selector.value = currentYear;
+}
+
+
+/* =========================================================
+   LOAD SALES DATA
+========================================================= */
+
+async function loadSalesData() {
+
+    const year =
+        document.getElementById("yearSelector").value;
+
+    const loading =
+        document.getElementById("salesLoading");
+
+    const errorBox =
+        document.getElementById("salesError");
+
+
+    errorBox.classList.remove("active");
+    loading.classList.add("active");
+
+
+    try {
+
+        const response =
+            await apiRequest(
+                `/api/admin/sales?year=${encodeURIComponent(year)}`
+            );
+
+
+        if (!response || !response.success) {
+
+            throw new Error(
+                response?.message ||
+                "Failed to load sales data."
+            );
+        }
+
+
+        renderSummary(
+            response.summary,
+            response.year
+        );
+
+
+        renderTable(
+            response.monthly_sales || []
+        );
+
+
+        renderCharts(
+            response.monthly_sales || [],
+            response.year
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Sales loading error:",
+            error
+        );
+
+        errorBox.textContent =
+            error.message ||
+            "Failed to load sales data.";
+
+        errorBox.classList.add("active");
+
+    } finally {
+
+        loading.classList.remove("active");
+    }
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+function renderSummary(summary, year) {
+
+    summary = summary || {};
+
+
+    document.getElementById("totalRevenue")
+        .textContent =
+        formatTZS(summary.total_revenue || 0);
+
+
+    document.getElementById("totalOrders")
+        .textContent =
+        Number(summary.total_orders || 0);
+
+
+    document.getElementById("averageOrder")
+        .textContent =
+        formatTZS(summary.average_order || 0);
+
+
+    document.getElementById("activeMonths")
+        .textContent =
+        Number(summary.active_months || 0);
+
+
+    document.getElementById("revenueChartYear")
+        .textContent =
+        year;
+
+
+    document.getElementById("ordersChartYear")
+        .textContent =
+        year;
+
+
+    document.getElementById("tableYear")
+        .textContent =
+        `Year ${year}`;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+function renderTable(months) {
+
+    const tbody =
+        document.getElementById("salesTableBody");
+
+
+    if (!months.length) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align:center;">
+                    No sales data available.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    const maxRevenue =
+        Math.max(
+            ...months.map(
+                month =>
+                    Number(month.revenue || 0)
+            )
+        );
+
+
+    tbody.innerHTML =
+        months.map(month => {
+
+            const revenue =
+                Number(month.revenue || 0);
+
+            const orders =
+                Number(month.orders || 0);
+
+            const average =
+                Number(month.average_order || 0);
+
+
+            let performance =
+                "No Sales";
+
+
+            if (revenue > 0 && maxRevenue > 0) {
+
+                const percentage =
+                    (revenue / maxRevenue) * 100;
+
+
+                if (percentage >= 75) {
+
+                    performance = "High";
+
+                } else if (percentage >= 40) {
+
+                    performance = "Medium";
+
+                } else {
+
+                    performance = "Low";
+                }
+            }
+
+
+            return `
+                <tr>
+
+                    <td>
+                        <span class="month-name">
+                            ${escapeHtml(month.month)}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="orders-count">
+                            ${orders}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="revenue-value">
+                            ${formatTZS(revenue)}
+                        </span>
+                    </td>
+
+                    <td>
+                        ${formatTZS(average)}
+                    </td>
+
+                    <td>
+                        <span class="performance">
+                            ${performance}
+                        </span>
+                    </td>
+
+                </tr>
+            `;
+
+        }).join("");
+}
+
+
+/* =========================================================
+   CHARTS
+========================================================= */
+
+function renderCharts(months, year) {
+
+    const labels =
+        months.map(
+            month => month.month
+        );
+
+
+    const revenues =
+        months.map(
+            month => Number(month.revenue || 0)
+        );
+
+
+    const orders =
+        months.map(
+            month => Number(month.orders || 0)
+        );
+
+
+    renderRevenueChart(
+        labels,
+        revenues,
+        year
+    );
+
+
+    renderOrdersChart(
+        labels,
+        orders,
+        year
+    );
+}
+
+
+/* =========================================================
+   REVENUE CHART
+========================================================= */
+
+function renderRevenueChart(
+    labels,
+    data,
+    year
+) {
+
+    const canvas =
+        document.getElementById("revenueChart");
+
+
+    if (revenueChart) {
+
+        revenueChart.destroy();
+    }
+
+
+    revenueChart =
+        new Chart(canvas, {
+
+            type: "bar",
+
+            data: {
+
+                labels: labels,
+
+                datasets: [
+
+                    {
+                        label: `Revenue ${year}`,
+
+                        data: data,
+
+                        borderWidth: 1,
+
+                        borderRadius: 7
+                    }
+
+                ]
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+                        display: false
+                    },
+
+                    tooltip: {
+
+                        callbacks: {
+
+                            label: function(context) {
+
+                                return formatTZS(
+                                    context.raw || 0
+                                );
+                            }
+                        }
+                    }
+                },
+
+                scales: {
+
+                    y: {
+
+                        beginAtZero: true,
+
+                        ticks: {
+
+                            callback: function(value) {
+
+                                return formatCompactTZS(
+                                    value
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        });
+}
+
+
+/* =========================================================
+   ORDERS CHART
+========================================================= */
+
+function renderOrdersChart(
+    labels,
+    data,
+    year
+) {
+
+    const canvas =
+        document.getElementById("ordersChart");
+
+
+    if (ordersChart) {
+
+        ordersChart.destroy();
+    }
+
+
+    ordersChart =
+        new Chart(canvas, {
+
+            type: "line",
+
+            data: {
+
+                labels: labels,
+
+                datasets: [
+
+                    {
+                        label: `Orders ${year}`,
+
+                        data: data,
+
+                        borderWidth: 3,
+
+                        tension: .35,
+
+                        fill: false,
+
+                        pointRadius: 4
+                    }
+
+                ]
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+                        display: false
+                    }
+
+                },
+
+                scales: {
+
+                    y: {
+
+                        beginAtZero: true,
+
+                        ticks: {
+
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+}
+
+
+/* =========================================================
+   FORMAT MONEY
+========================================================= */
+
+function formatCompactTZS(value) {
+
+    value =
+        Number(value || 0);
+
+
+    if (value >= 1000000000) {
+
+        return (
+            (value / 1000000000)
+            .toFixed(1)
+            + "B"
+        );
+
+    }
+
+
+    if (value >= 1000000) {
+
+        return (
+            (value / 1000000)
+            .toFixed(1)
+            + "M"
+        );
+
+    }
+
+
+    if (value >= 1000) {
+
+        return (
+            (value / 1000)
+            .toFixed(0)
+            + "K"
+        );
+
+    }
+
+
+    return value.toString();
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        setupYearSelector();
+
+        loadSalesData();
+
+    }
+);
+
+</script>
+
+{% endblock %}
