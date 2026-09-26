@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 Werkzeug
 requests
 gunicorn
+dotenv
