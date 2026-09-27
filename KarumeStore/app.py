@@ -288,7 +288,9 @@ def migrate_database():
 
     if "users" not in tables:
 
-        print("Users table does not exist yet.")
+        print(
+            "Users table does not exist yet."
+        )
 
         return
 
@@ -305,7 +307,9 @@ def migrate_database():
 
     if "whatsapp_number" not in columns:
 
-        print("Adding whatsapp_number column...")
+        print(
+            "Adding whatsapp_number column..."
+        )
 
         db.session.execute(
             text(
@@ -316,7 +320,9 @@ def migrate_database():
 
         db.session.commit()
 
-        print("whatsapp_number added successfully.")
+        print(
+            "whatsapp_number added successfully."
+        )
 
 
     # -----------------------------------------------------
@@ -326,6 +332,7 @@ def migrate_database():
     order_columns = {
 
         column["name"]
+
         for column in inspector.get_columns("orders")
 
     } if "orders" in tables else set()
@@ -379,6 +386,104 @@ def migrate_database():
 
 
 # =========================================================
+# DEFAULT CATEGORIES
+# =========================================================
+
+def seed_default_categories():
+
+    """
+    Create default categories if they do not exist.
+
+    This function DOES NOT create products.
+
+    Existing categories are preserved.
+    """
+
+    default_categories = [
+
+        "Clothes",
+
+        "Shoes",
+
+        "Fridges",
+
+        "Electronics",
+
+        "Bags",
+
+        "Watches",
+
+        "Accessories",
+
+        "Home Appliances",
+
+    ]
+
+
+    print(
+        "Checking default categories..."
+    )
+
+
+    created_count = 0
+
+
+    for category_name in default_categories:
+
+        existing_category = (
+            Category.query
+            .filter_by(
+                name=category_name
+            )
+            .first()
+        )
+
+
+        if existing_category:
+
+            print(
+                f"Category already exists: "
+                f"{category_name}"
+            )
+
+            continue
+
+
+        category = Category(
+            name=category_name
+        )
+
+
+        db.session.add(
+            category
+        )
+
+
+        created_count += 1
+
+
+    # -----------------------------------------------------
+    # SAVE NEW CATEGORIES
+    # -----------------------------------------------------
+
+    if created_count > 0:
+
+        db.session.commit()
+
+        print(
+            f"Created {created_count} "
+            f"default categories."
+        )
+
+    else:
+
+        print(
+            "All default categories "
+            "already exist."
+        )
+
+
+# =========================================================
 # DATABASE INITIALIZATION
 # =========================================================
 
@@ -387,12 +492,23 @@ def create_database():
     with app.app_context():
 
         print("========================================")
-        print("DATABASE INITIALIZATION")
+
+        print(
+            "DATABASE INITIALIZATION"
+        )
+
         print("========================================")
+
+
+        # -------------------------------------------------
+        # DATABASE INFORMATION
+        # -------------------------------------------------
 
         print(
             "Database:",
-            str(db.engine.url.database)
+            str(
+                db.engine.url.database
+            )
         )
 
         print(
@@ -400,19 +516,72 @@ def create_database():
             db.engine.url.drivername
         )
 
-        print("Creating missing tables...")
+
+        # -------------------------------------------------
+        # CREATE TABLES
+        # -------------------------------------------------
+
+        print(
+            "Creating missing tables..."
+        )
 
         db.create_all()
 
-        print("Database tables created/verified.")
+        print(
+            "Database tables created/verified."
+        )
 
-        print("Running database migrations...")
+
+        # -------------------------------------------------
+        # DATABASE MIGRATIONS
+        # -------------------------------------------------
+
+        print(
+            "Running database migrations..."
+        )
 
         migrate_database()
 
-        print("Database initialization completed.")
 
-        print("========================================")
+        # -------------------------------------------------
+        # DEFAULT CATEGORIES
+        # -------------------------------------------------
+
+        print(
+            "Initializing default categories..."
+        )
+
+        seed_default_categories()
+
+
+        # -------------------------------------------------
+        # PRODUCTS
+        # -------------------------------------------------
+        #
+        # IMPORTANT:
+        #
+        # Products are NOT created automatically.
+        #
+        # Admin will add products manually.
+        #
+        # -------------------------------------------------
+
+        print(
+            "Product seeding skipped."
+        )
+
+
+        # -------------------------------------------------
+        # COMPLETE
+        # -------------------------------------------------
+
+        print(
+            "Database initialization completed."
+        )
+
+        print(
+            "========================================"
+        )
 
 
 # =========================================================
@@ -495,6 +664,7 @@ def debug_database():
 
         })
 
+
 # =========================================================
 # DATABASE INITIALIZATION
 # =========================================================
@@ -506,9 +676,15 @@ try:
 except Exception as error:
 
     print("========================================")
-    print("DATABASE INITIALIZATION FAILED")
+
+    print(
+        "DATABASE INITIALIZATION FAILED"
+    )
+
     print("========================================")
+
     print(error)
+
     print("========================================")
 
 
