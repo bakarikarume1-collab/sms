@@ -1,3 +1,4 @@
+
 import os
 from datetime import timedelta
 from auth import get_current_user
@@ -19,11 +20,6 @@ app = Flask(__name__)
 # INSTANCE FOLDER
 # =========================================================
 
-
-
-
-
-
 instance_path = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "instance"
@@ -42,19 +38,39 @@ database_path = os.path.join(
 )
 
 
+# =========================================================
+# DATABASE URL
+# =========================================================
+
 database_url = os.environ.get("DATABASE_URL")
 
-if not database_url:
-    database_url = "sqlite:///" + database_path.replace("\\", "/")
+if database_url:
+
+    # Support older PostgreSQL URL format
+    database_url = database_url.replace(
+        "postgres://",
+        "postgresql://",
+        1
+    )
+
+else:
+
+    # Local development uses SQLite
+    database_url = (
+        "sqlite:///"
+        + database_path.replace("\\", "/")
+    )
+
 
 # =========================================================
 # CONFIGURATION
 # =========================================================
 
 app.config["SECRET_KEY"] = os.environ.get(
-    "SECRET_KEY")
+    "SECRET_KEY"
+)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -63,7 +79,9 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(
 )
 
 app.config["SESSION_COOKIE_HTTPONLY"] = True
+
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get(
     "SESSION_COOKIE_SECURE",
     "0",
@@ -74,14 +92,11 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get(
 # INITIALIZE DATABASE
 # =========================================================
 
-# =========================================================
-# INITIALIZE DATABASE
-# =========================================================
-
 db.init_app(app)
 
 
 def get_store_setting(key, default=None):
+
     setting = StoreSetting.query.filter_by(
         key=key
     ).first()
@@ -94,6 +109,7 @@ def get_store_setting(key, default=None):
 
 @app.context_processor
 def inject_store_settings():
+
     return {
         "store_name": get_store_setting(
             "store_name",
@@ -105,7 +121,12 @@ def inject_store_settings():
 @app.before_request
 def protect_api_origin():
 
-    if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+    if request.method not in {
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+    }:
         return None
 
     if not request.path.startswith("/api/"):
@@ -122,6 +143,9 @@ def protect_api_origin():
     return None
 
 
+# =========================================================
+# BLUEPRINTS
+# =========================================================
 
 from auth import auth
 from products import products
@@ -158,8 +182,13 @@ def health():
     })
 
 
+# =========================================================
+# ERROR HANDLERS
+# =========================================================
+
 @app.errorhandler(400)
 def bad_request(error):
+
     return jsonify({
         "success": False,
         "message": "Bad request.",
@@ -168,6 +197,7 @@ def bad_request(error):
 
 @app.errorhandler(401)
 def unauthorized(error):
+
     return jsonify({
         "success": False,
         "message": "Authentication required.",
@@ -176,6 +206,7 @@ def unauthorized(error):
 
 @app.errorhandler(403)
 def forbidden(error):
+
     return jsonify({
         "success": False,
         "message": "Access denied.",
@@ -184,23 +215,29 @@ def forbidden(error):
 
 @app.errorhandler(404)
 def not_found(error):
+
     if request.path.startswith("/api/"):
+
         return jsonify({
             "success": False,
             "message": "Resource not found.",
         }), 404
+
     return error
 
 
 @app.errorhandler(429)
 def too_many_requests(error):
+
     return jsonify({
         "success": False,
         "message": "Too many requests.",
     }), 429
 
+
 @app.context_processor
 def inject_current_user():
+
     return {
         "user": get_current_user()
     }
@@ -208,6 +245,7 @@ def inject_current_user():
 
 @app.errorhandler(500)
 def server_error(error):
+
     return jsonify({
         "success": False,
         "message": "Internal server error.",
@@ -224,7 +262,7 @@ def migrate_database():
 
     tables = inspector.get_table_names()
 
-    
+
     # -----------------------------------------------------
     # USERS TABLE
     # -----------------------------------------------------
@@ -235,17 +273,18 @@ def migrate_database():
 
         return
 
+
     columns = {
         column["name"]
         for column in inspector.get_columns("users")
     }
+
 
     # -----------------------------------------------------
     # ADD WHATSAPP NUMBER
     # -----------------------------------------------------
 
     if "whatsapp_number" not in columns:
-
 
         db.session.execute(
             text(
@@ -256,27 +295,46 @@ def migrate_database():
 
         db.session.commit()
 
+
+    # -----------------------------------------------------
+    # ORDERS TABLE COLUMNS
+    # -----------------------------------------------------
+
     order_columns = {
+
         column["name"]
         for column in inspector.get_columns("orders")
+
     } if "orders" in tables else set()
 
+
     location_columns = {
+
         "delivery_latitude": "FLOAT",
+
         "delivery_longitude": "FLOAT",
-        "delivery_location_shared": "BOOLEAN NOT NULL DEFAULT 0",
-        "delivery_location_shared_at": "DATETIME",
+
+        "delivery_location_shared":
+            "BOOLEAN NOT NULL DEFAULT 0",
+
+        "delivery_location_shared_at":
+            "DATETIME",
+
     }
+
 
     for column_name, column_type in location_columns.items():
 
         if column_name not in order_columns:
-            db.session.execute(text(
-                f"ALTER TABLE orders ADD COLUMN "
-                f"{column_name} {column_type}"
-            ))
-            db.session.commit()
 
+            db.session.execute(
+                text(
+                    f"ALTER TABLE orders ADD COLUMN "
+                    f"{column_name} {column_type}"
+                )
+            )
+
+            db.session.commit()
 
 
 # =========================================================
@@ -291,8 +349,6 @@ def create_database():
 
         migrate_database()
 
-       
-       
 
 # =========================================================
 # DEBUG DATABASE ROUTE
@@ -307,23 +363,29 @@ def debug_database():
             Category.id.asc()
         ).all()
 
+
         products_list = Product.query.order_by(
             Product.id.asc()
         ).all()
+
 
         return jsonify({
 
             "success": True,
 
+
             "database": str(
                 db.engine.url.database
             ),
 
+
             "categories_count":
                 len(categories),
 
+
             "products_count":
                 len(products_list),
+
 
             "categories": [
 
@@ -335,9 +397,11 @@ def debug_database():
                 for category in categories
             ],
 
+
             "products": [
 
                 {
+
                     "id": product.id,
 
                     "name": product.name,
@@ -353,17 +417,31 @@ def debug_database():
                             if product.category
                             else None
                         )
+
                 }
 
                 for product in products_list
             ]
+
         })
-        
- create_database()
+
+
+# =========================================================
+# CREATE DATABASE
+# =========================================================
+
+create_database()
+
+
+# =========================================================
+# LOCAL DEVELOPMENT
+# =========================================================
 
 if __name__ == "__main__":
+
     app.run(
         host="127.0.0.1",
         port=5000,
         debug=True
     )
+
