@@ -1,7 +1,6 @@
 import os
-import smtplib
-from email.message import EmailMessage
 
+import resend
 from dotenv import load_dotenv
 
 
@@ -9,182 +8,203 @@ load_dotenv()
 
 
 def send_otp_email(recipient_email, otp):
+    """
+    Send password-reset OTP using Resend API.
 
-    # =====================================================
-    # MAIL CONFIGURATION
-    # =====================================================
+    Returns:
+        True  -> email request accepted by Resend
+        False -> sending failed
+    """
 
-    mail_server = os.getenv("MAIL_SERVER")
-
-    mail_port = int(
-        os.getenv("MAIL_PORT", "465")
+    api_key = os.getenv("RESEND_API_KEY")
+    mail_from = os.getenv(
+        "MAIL_FROM",
+        "onboarding@resend.dev"
     )
-
-    mail_username = os.getenv("MAIL_USERNAME")
-
-    mail_password = os.getenv("MAIL_PASSWORD")
-
-    mail_from = os.getenv("MAIL_FROM")
-
     mail_from_name = os.getenv(
         "MAIL_FROM_NAME",
         "KarumeStore"
     )
 
+    # ---------------------------------------------------------
+    # Validate configuration
+    # ---------------------------------------------------------
 
-    # =====================================================
-    # VALIDATE CONFIGURATION
-    # =====================================================
-
-    missing = []
-
-    if not mail_server:
-        missing.append("MAIL_SERVER")
-
-    if not mail_username:
-        missing.append("MAIL_USERNAME")
-
-    if not mail_password:
-        missing.append("MAIL_PASSWORD")
-
-    if not mail_from:
-        missing.append("MAIL_FROM")
-
-
-    if missing:
-
-        print(
-            "[EMAIL] Missing environment variables:",
-            ", ".join(missing)
-        )
-
+    if not api_key:
+        print("[EMAIL] RESEND_API_KEY is missing.")
         return False
 
+    if not recipient_email:
+        print("[EMAIL] Recipient email is missing.")
+        return False
 
-    # =====================================================
-    # CREATE EMAIL
-    # =====================================================
+    if not otp:
+        print("[EMAIL] OTP is missing.")
+        return False
 
-    message = EmailMessage()
+    # ---------------------------------------------------------
+    # Configure Resend
+    # ---------------------------------------------------------
 
-    message["Subject"] = (
-        "Your KarumeStore Reset OTP Code"
-    )
+    resend.api_key = api_key
 
-    message["From"] = (
-        f"{mail_from_name} <{mail_from}>"
-    )
+    sender = f"{mail_from_name} <{mail_from}>"
 
-    message["To"] = recipient_email
+    # ---------------------------------------------------------
+    # Email content
+    # ---------------------------------------------------------
 
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>KarumeStore Password Reset</title>
+</head>
 
-    message.set_content(
-        f"""
-Hello,
+<body style="
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+    font-family: Arial, sans-serif;
+">
 
-We received your request to reset your KarumeStore password.
+    <div style="
+        max-width: 600px;
+        margin: 40px auto;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 30px;
+        box-sizing: border-box;
+    ">
 
-Your verification code is:
+        <h2 style="
+            margin-top: 0;
+            color: #222222;
+        ">
+            KarumeStore Password Reset
+        </h2>
 
-{otp}
+        <p style="
+            color: #444444;
+            font-size: 15px;
+            line-height: 1.6;
+        ">
+            Hello,
+        </p>
 
-Do not share this code with anyone.
+        <p style="
+            color: #444444;
+            font-size: 15px;
+            line-height: 1.6;
+        ">
+            We received a request to reset your KarumeStore
+            account password.
+        </p>
 
-This code will expire in 10 minutes.
+        <p style="
+            color: #444444;
+            font-size: 15px;
+            line-height: 1.6;
+        ">
+            Your verification code is:
+        </p>
 
-If you did not request a password reset,
-you can safely ignore this email.
+        <div style="
+            margin: 25px 0;
+            padding: 20px;
+            background: #f1f1f1;
+            border-radius: 10px;
+            text-align: center;
+        ">
 
-Regards,
-{mail_from_name}
+            <span style="
+                font-size: 32px;
+                font-weight: bold;
+                letter-spacing: 8px;
+                color: #111111;
+            ">
+                {otp}
+            </span>
 
-Thank you for choosing KarumeStore.
+        </div>
 
-You can reply to this email if you have any questions.
+        <p style="
+            color: #444444;
+            font-size: 15px;
+            line-height: 1.6;
+        ">
+            This code will expire in <strong>10 minutes</strong>.
+        </p>
+
+        <p style="
+            color: #444444;
+            font-size: 15px;
+            line-height: 1.6;
+        ">
+            Do not share this code with anyone.
+        </p>
+
+        <p style="
+            color: #666666;
+            font-size: 14px;
+            line-height: 1.6;
+        ">
+            If you did not request a password reset,
+            you can safely ignore this email.
+        </p>
+
+        <hr style="
+            border: none;
+            border-top: 1px solid #eeeeee;
+            margin: 30px 0;
+        ">
+
+        <p style="
+            color: #777777;
+            font-size: 13px;
+        ">
+            Regards,<br>
+            <strong>{mail_from_name}</strong>
+        </p>
+
+    </div>
+
+</body>
+</html>
 """
-    )
 
-
-    # =====================================================
-    # SEND EMAIL
-    # =====================================================
+    # ---------------------------------------------------------
+    # Send through Resend API
+    # ---------------------------------------------------------
 
     try:
 
         print(
-            f"[EMAIL] Connecting to {mail_server}:{mail_port}..."
+            f"[EMAIL] Sending OTP to {recipient_email} "
+            f"through Resend..."
         )
 
+        params = {
+            "from": sender,
+            "to": [recipient_email],
+            "subject": "Your KarumeStore Reset OTP Code",
+            "html": html_content,
+        }
 
-        with smtplib.SMTP_SSL(
-            mail_server,
-            mail_port,
-            timeout=15
-        ) as smtp:
-
-            print(
-                "[EMAIL] SMTP connection established."
-            )
-
-
-            smtp.login(
-                mail_username,
-                mail_password
-            )
-
-
-            print(
-                "[EMAIL] SMTP authentication successful."
-            )
-
-
-            smtp.send_message(
-                message
-            )
-
+        response = resend.Emails.send(params)
 
         print(
-            "[EMAIL] OTP email sent successfully."
+            f"[EMAIL] Resend accepted email request: "
+            f"{response}"
         )
 
         return True
 
-
-    except smtplib.SMTPAuthenticationError as exc:
-
-        print(
-            "[EMAIL] SMTP authentication failed:",
-            exc
-        )
-
-        return False
-
-
-    except (TimeoutError, OSError) as exc:
+    except Exception as error:
 
         print(
-            "[EMAIL] SMTP connection failed:",
-            exc
-        )
-
-        return False
-
-
-    except smtplib.SMTPException as exc:
-
-        print(
-            "[EMAIL] SMTP error:",
-            exc
-        )
-
-        return False
-
-
-    except Exception as exc:
-
-        print(
-            "[EMAIL] Unexpected email error:",
-            exc
+            f"[EMAIL] Resend sending failed: {error}"
         )
 
         return False
