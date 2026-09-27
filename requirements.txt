@@ -4,3 +4,4 @@ python-dotenv
 SQLAlchemy
 pytest
 gunicorn
+psycopg2-binary
