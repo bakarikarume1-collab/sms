@@ -1,11 +1,10 @@
-
 import os
 from datetime import timedelta
-from auth import get_current_user
 
 from flask import Flask, jsonify, request
 from sqlalchemy import inspect, text
 
+from auth import get_current_user
 from models import db, Category, Product, StoreSetting
 
 
@@ -95,6 +94,10 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get(
 db.init_app(app)
 
 
+# =========================================================
+# STORE SETTINGS
+# =========================================================
+
 def get_store_setting(key, default=None):
 
     setting = StoreSetting.query.filter_by(
@@ -107,6 +110,10 @@ def get_store_setting(key, default=None):
     return setting.value
 
 
+# =========================================================
+# STORE SETTINGS CONTEXT
+# =========================================================
+
 @app.context_processor
 def inject_store_settings():
 
@@ -117,6 +124,10 @@ def inject_store_settings():
         )
     }
 
+
+# =========================================================
+# API ORIGIN PROTECTION
+# =========================================================
 
 @app.before_request
 def protect_api_origin():
@@ -235,6 +246,10 @@ def too_many_requests(error):
     }), 429
 
 
+# =========================================================
+# CURRENT USER CONTEXT
+# =========================================================
+
 @app.context_processor
 def inject_current_user():
 
@@ -242,6 +257,10 @@ def inject_current_user():
         "user": get_current_user()
     }
 
+
+# =========================================================
+# SERVER ERROR
+# =========================================================
 
 @app.errorhandler(500)
 def server_error(error):
@@ -286,6 +305,8 @@ def migrate_database():
 
     if "whatsapp_number" not in columns:
 
+        print("Adding whatsapp_number column...")
+
         db.session.execute(
             text(
                 "ALTER TABLE users "
@@ -294,6 +315,8 @@ def migrate_database():
         )
 
         db.session.commit()
+
+        print("whatsapp_number added successfully.")
 
 
     # -----------------------------------------------------
@@ -308,33 +331,51 @@ def migrate_database():
     } if "orders" in tables else set()
 
 
+    # -----------------------------------------------------
+    # DELIVERY LOCATION COLUMNS
+    # -----------------------------------------------------
+
     location_columns = {
 
-        "delivery_latitude": "FLOAT",
+        "delivery_latitude":
+            "DOUBLE PRECISION",
 
-        "delivery_longitude": "FLOAT",
+        "delivery_longitude":
+            "DOUBLE PRECISION",
 
         "delivery_location_shared":
-            "BOOLEAN NOT NULL DEFAULT 0",
+            "BOOLEAN NOT NULL DEFAULT FALSE",
 
         "delivery_location_shared_at":
-            "DATETIME",
+            "TIMESTAMP",
 
     }
 
+
+    # -----------------------------------------------------
+    # ADD MISSING ORDER COLUMNS
+    # -----------------------------------------------------
 
     for column_name, column_type in location_columns.items():
 
         if column_name not in order_columns:
 
+            print(
+                f"Adding {column_name} column..."
+            )
+
             db.session.execute(
                 text(
-                    f"ALTER TABLE orders ADD COLUMN "
-                    f"{column_name} {column_type}"
+                    f"ALTER TABLE orders "
+                    f"ADD COLUMN {column_name} {column_type}"
                 )
             )
 
             db.session.commit()
+
+            print(
+                f"{column_name} added successfully."
+            )
 
 
 # =========================================================
@@ -345,9 +386,33 @@ def create_database():
 
     with app.app_context():
 
+        print("========================================")
+        print("DATABASE INITIALIZATION")
+        print("========================================")
+
+        print(
+            "Database:",
+            str(db.engine.url.database)
+        )
+
+        print(
+            "Engine:",
+            db.engine.url.drivername
+        )
+
+        print("Creating missing tables...")
+
         db.create_all()
 
+        print("Database tables created/verified.")
+
+        print("Running database migrations...")
+
         migrate_database()
+
+        print("Database initialization completed.")
+
+        print("========================================")
 
 
 # =========================================================
@@ -373,40 +438,45 @@ def debug_database():
 
             "success": True,
 
+            "database":
+                str(
+                    db.engine.url.database
+                ),
 
-            "database": str(
-                db.engine.url.database
-            ),
-
+            "driver":
+                db.engine.url.drivername,
 
             "categories_count":
                 len(categories),
 
-
             "products_count":
                 len(products_list),
-
 
             "categories": [
 
                 {
-                    "id": category.id,
-                    "name": category.name
+                    "id":
+                        category.id,
+
+                    "name":
+                        category.name
                 }
 
                 for category in categories
             ],
 
-
             "products": [
 
                 {
 
-                    "id": product.id,
+                    "id":
+                        product.id,
 
-                    "name": product.name,
+                    "name":
+                        product.name,
 
-                    "price": product.price,
+                    "price":
+                        product.price,
 
                     "category_id":
                         product.category_id,
@@ -427,21 +497,22 @@ def debug_database():
 
 
 # =========================================================
-# CREATE DATABASE
-# =========================================================
-
-create_database()
-
-
-# =========================================================
 # LOCAL DEVELOPMENT
 # =========================================================
 
 if __name__ == "__main__":
+
+    # Create database automatically
+    # ONLY when running locally with:
+    #
+    # python app.py
+    #
+    # Gunicorn/Render will NOT execute this section.
+
+    create_database()
 
     app.run(
         host="127.0.0.1",
         port=5000,
         debug=True
     )
-
