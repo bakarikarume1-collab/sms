@@ -26,13 +26,12 @@ else:
 SMS_SERVICE_URL = os.environ.get(
     "SMS_SERVICE_URL",
     "http://127.0.0.1:5001",
-).rstrip("/")
-
+).strip().rstrip("/")
 
 SMS_SERVICE_TOKEN = os.environ.get(
     "SMS_SERVICE_TOKEN",
     "",
-)
+).strip().strip("'\"")
 
 
 # =========================================================
