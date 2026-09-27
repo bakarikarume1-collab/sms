@@ -1334,14 +1334,14 @@ function getCategoryIcon(name) {
     if (
         category.includes("cloth")
     ) {
-        return "👕";
+        return "";
     }
 
 
     if (
         category.includes("shoe")
     ) {
-        return "👟";
+        return "";
     }
 
 
@@ -1349,46 +1349,46 @@ function getCategoryIcon(name) {
         category.includes("fridge") ||
         category.includes("refrigerator")
     ) {
-        return "🧊";
+        return "";
     }
 
 
     if (
         category.includes("electronic")
     ) {
-        return "📱";
+        return "";
     }
 
 
     if (
         category.includes("bag")
     ) {
-        return "🎒";
+        return "";
     }
 
 
     if (
         category.includes("watch")
     ) {
-        return "⌚";
+        return "";
     }
 
 
     if (
         category.includes("accessor")
     ) {
-        return "👜";
+        return "";
     }
 
 
     if (
         category.includes("appliance")
     ) {
-        return "🏠";
+        return "";
     }
 
 
-    return "🛍️";
+    return "";
 }
 
 
@@ -1654,7 +1654,7 @@ if (forgotPasswordForm) {
                     data.message ||
                     "OTP has been sent.";
 
-
+                message.style.color = "green";
                 setTimeout(() => {
 
                     location.href =
@@ -1785,7 +1785,7 @@ if (resetPasswordForm) {
                         data.message ||
                         "Password reset successfully.";
 
-
+                    message.style.color = "green";
                     setTimeout(() => {
 
                         location.href = "/login";
@@ -1916,20 +1916,21 @@ if (verifyOtpForm) {
                 // SUCCESS
                 // =====================================
 
-                if (data.success) {
+               if (data.success) {
 
                     message.textContent =
                         data.message ||
                         "OTP verified successfully.";
-
-
+                
+                    message.style.color = "green";
+                
                     setTimeout(() => {
-
+                
                         location.href =
                             "/reset-password";
-
+                
                     }, 700);
-
+                
                     return;
                 }
 
