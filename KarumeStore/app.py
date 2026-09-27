@@ -5,7 +5,8 @@ from flask import Flask, jsonify, request
 from sqlalchemy import inspect, text
 
 from auth import get_current_user
-from models import db, Category, Product, StoreSetting
+from models import db, Category, Product, StoreSetting, User
+from werkzeug.security import generate_password_hash
 
 
 # =========================================================
@@ -484,6 +485,142 @@ def seed_default_categories():
 
 
 # =========================================================
+# DEFAULT ADMIN
+# =========================================================
+
+def seed_default_admin():
+
+    """
+    Create the admin account if it does not already exist.
+
+    Admin credentials are read from environment variables:
+
+        ADMIN_EMAIL
+        ADMIN_PASSWORD
+
+    Existing users are never modified.
+    Existing admin passwords are never overwritten.
+    """
+
+    admin_email = os.environ.get(
+        "ADMIN_EMAIL"
+    )
+
+    admin_password = os.environ.get(
+        "ADMIN_PASSWORD"
+    )
+
+    # -----------------------------------------------------
+    # CHECK ENVIRONMENT VARIABLES
+    # -----------------------------------------------------
+
+    if not admin_email or not admin_password:
+
+        print(
+            "ADMIN_EMAIL or ADMIN_PASSWORD "
+            "is not configured."
+        )
+
+        print(
+            "Admin creation skipped."
+        )
+
+        return
+
+    admin_email = admin_email.strip().lower()
+
+    # -----------------------------------------------------
+    # CHECK IF EMAIL ALREADY EXISTS
+    # -----------------------------------------------------
+
+    existing_user = User.query.filter_by(
+        email=admin_email
+    ).first()
+
+    if existing_user:
+
+        if existing_user.role == "admin":
+
+            print(
+                f"Admin already exists: "
+                f"{admin_email}"
+            )
+
+        else:
+
+            print(
+                f"User already exists with email "
+                f"{admin_email}, but is not an admin."
+            )
+
+        return
+
+    # -----------------------------------------------------
+    # CREATE ADMIN
+    # -----------------------------------------------------
+
+    admin = User(
+        name="Administrator",
+        email=admin_email,
+        password_hash=generate_password_hash(
+            admin_password
+        ),
+        whatsapp_number=None,
+        role="admin",
+        is_active=True
+    )
+
+    db.session.add(admin)
+
+    # -----------------------------------------------------
+    # SAVE
+    # -----------------------------------------------------
+
+    try:
+
+        db.session.commit()
+
+        print(
+            "========================================"
+        )
+
+        print(
+            "DEFAULT ADMIN CREATED"
+        )
+
+        print(
+            f"Admin email: {admin_email}"
+        )
+
+        print(
+            "Admin password: configured from "
+            "ADMIN_PASSWORD"
+        )
+
+        print(
+            "========================================"
+        )
+
+    except Exception as error:
+
+        db.session.rollback()
+
+        print(
+            "========================================"
+        )
+
+        print(
+            "ADMIN CREATION FAILED"
+        )
+
+        print(error)
+
+        print(
+            "========================================"
+        )
+
+
+# =========================================================
 # DATABASE INITIALIZATION
 # =========================================================
 
@@ -555,15 +692,18 @@ def create_database():
 
 
         # -------------------------------------------------
-        # PRODUCTS
+        # DEFAULT ADMIN
         # -------------------------------------------------
-        #
-        # IMPORTANT:
-        #
-        # Products are NOT created automatically.
-        #
-        # Admin will add products manually.
-        #
+
+        print(
+            "Initializing default admin..."
+        )
+
+        seed_default_admin()
+
+
+        # -------------------------------------------------
+        # PRODUCTS
         # -------------------------------------------------
 
         print(
@@ -582,7 +722,6 @@ def create_database():
         print(
             "========================================"
         )
-
 
 # =========================================================
 # DEBUG DATABASE ROUTE
