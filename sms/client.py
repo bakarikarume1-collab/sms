@@ -18,6 +18,38 @@ class SMSClient:
         self.sender_id = SMS_SENDER_ID
 
     # =====================================================
+    # NORMALIZE TANZANIA PHONE NUMBER
+    # =====================================================
+
+    def normalize_phone(self, phone):
+
+        if phone is None:
+            raise ValueError(
+                "Phone number is required."
+            )
+
+        phone = (
+            str(phone)
+            .strip()
+            .replace(" ", "")
+            .replace("-", "")
+        )
+
+        if phone.startswith("+"):
+            phone = phone[1:]
+
+        if phone.startswith("0"):
+            phone = "255" + phone[1:]
+
+        if not re.fullmatch(r"255\d{9}", phone):
+            raise ValueError(
+                "Phone number must be a valid Tanzania number, "
+                "for example 255712345678."
+            )
+
+        return phone
+
+    # =====================================================
     # SEND SMS
     # =====================================================
 
@@ -32,24 +64,7 @@ class SMSClient:
         # VALIDATION
         # -------------------------------------------------
 
-        if phone is None:
-            raise ValueError(
-                "Phone number is required."
-            )
-
-        phone = str(phone).strip().replace(" ", "")
-
-        if phone.startswith("+"):
-            phone = phone[1:]
-
-        if phone.startswith("0"):
-            phone = "255" + phone[1:]
-
-        if not re.fullmatch(r"255\d{9}", phone):
-            raise ValueError(
-                "Phone number must be a valid Tanzania number, "
-                "for example 255712345678."
-            )
+        phone = self.normalize_phone(phone)
 
         if not message:
             raise ValueError(
@@ -72,7 +87,7 @@ class SMSClient:
             )
 
         # -------------------------------------------------
-        # REQUEST HEADERS
+        # HEADERS
         # -------------------------------------------------
 
         headers = {
@@ -82,27 +97,31 @@ class SMSClient:
         }
 
         # -------------------------------------------------
-        # REQUEST PAYLOAD
+        # ESKI SMS PAYLOAD
         # -------------------------------------------------
 
         payload = {
             "recipient": phone,
-            "to": phone,
             "sender_id": self.sender_id,
-            "sender": self.sender_id,
             "type": "plain",
             "message": message,
         }
 
         # -------------------------------------------------
-        # IDEMPOTENCY KEY
+        # DEBUG INFO
         # -------------------------------------------------
 
-        if idempotency_key:
+        print(
+            f"[SMS] Sending SMS to {phone}"
+        )
 
-            payload["idempotency_key"] = (
-                idempotency_key
-            )
+        print(
+            f"[SMS] Endpoint: {self.api_url}"
+        )
+
+        print(
+            f"[SMS] Sender ID: {self.sender_id}"
+        )
 
         # -------------------------------------------------
         # SEND REQUEST
@@ -139,70 +158,183 @@ class SMSClient:
 
         except ValueError:
 
-            response_data = response.text
+            response_data = {
+                "status": "error",
+                "message": response.text,
+            }
+
+        print(
+            f"[SMS] HTTP status: {response.status_code}"
+        )
+
+        print(
+            f"[SMS] Provider response: {response_data}"
+        )
 
         # -------------------------------------------------
-        # HANDLE PROVIDER ERROR
+        # HTTP ERROR
         # -------------------------------------------------
 
         if response.status_code >= 400:
 
+            if isinstance(response_data, dict):
+
+                error_message = (
+                    response_data.get("message")
+                    or response_data.get("error")
+                    or str(response_data)
+                )
+
+            else:
+
+                error_message = str(response_data)
+
             raise RuntimeError(
                 "SMS provider rejected the request "
                 f"(HTTP {response.status_code}): "
-                f"{response_data}"
-            )
-
-        if isinstance(response_data, dict) and response_data.get("status") == "error":
-
-            error_msg = (
-                response_data.get("message")
-                or response_data.get("error")
-                or str(response_data)
-            )
-
-            raise RuntimeError(
-                f"SMS provider rejected the request: {error_msg}"
+                f"{error_message}"
             )
 
         # -------------------------------------------------
-        # NORMALIZE PROVIDER RESPONSE
+        # ESKI APPLICATION ERROR
         # -------------------------------------------------
 
         if isinstance(response_data, dict):
 
-            inner_data = response_data.get("data")
+            provider_status = str(
+                response_data.get(
+                    "status",
+                    ""
+                )
+            ).lower()
 
-            if isinstance(inner_data, dict):
+            if provider_status == "error":
 
-                if "id" not in response_data:
-                    response_data["id"] = (
-                        inner_data.get("uid")
-                        or inner_data.get("id")
-                    )
+                error_message = (
+                    response_data.get("message")
+                    or response_data.get("error")
+                    or "Unknown SMS provider error."
+                )
 
-                if "cost" not in response_data:
-                    response_data["cost"] = inner_data.get(
-                        "cost"
-                    )
-
-                if "segments" not in response_data:
-                    response_data["segments"] = (
-                        inner_data.get("sms_count")
-                        or inner_data.get("segments")
-                    )
-
-                if inner_data.get("status"):
-                    response_data["status"] = inner_data.get(
-                        "status"
-                    )
-
-            elif "id" not in response_data and "uid" in response_data:
-
-                response_data["id"] = response_data.get("uid")
+                raise RuntimeError(
+                    "SMS provider rejected the request: "
+                    f"{error_message}"
+                )
 
         # -------------------------------------------------
-        # RETURN PROVIDER RESPONSE
+        # SUCCESS
         # -------------------------------------------------
 
-        return response_data
+        if not isinstance(response_data, dict):
+
+            raise RuntimeError(
+                "SMS provider returned an invalid response."
+            )
+
+        provider_status = str(
+            response_data.get(
+                "status",
+                ""
+            )
+        ).lower()
+
+        if provider_status != "success":
+
+            raise RuntimeError(
+                "SMS provider returned an unexpected response: "
+                f"{response_data}"
+            )
+
+        # -------------------------------------------------
+        # EXTRACT DATA
+        # -------------------------------------------------
+
+        data = response_data.get("data")
+
+        # Eski documentation shows data containing
+        # SMS report details. Different API responses
+        # may return this as a dictionary or list.
+
+        if isinstance(data, dict):
+
+            provider_id = (
+                data.get("uid")
+                or data.get("id")
+            )
+
+            cost = data.get("cost")
+
+            segments = (
+                data.get("sms_count")
+                or data.get("segments")
+            )
+
+            status = data.get(
+                "status",
+                "SENT"
+            )
+
+        elif isinstance(data, list) and data:
+
+            first_item = data[0]
+
+            if isinstance(first_item, dict):
+
+                provider_id = (
+                    first_item.get("uid")
+                    or first_item.get("id")
+                )
+
+                cost = first_item.get("cost")
+
+                segments = (
+                    first_item.get("sms_count")
+                    or first_item.get("segments")
+                )
+
+                status = first_item.get(
+                    "status",
+                    "SENT"
+                )
+
+            else:
+
+                provider_id = None
+                cost = None
+                segments = None
+                status = "SENT"
+
+        else:
+
+            provider_id = None
+            cost = None
+            segments = None
+            status = "SENT"
+
+        # -------------------------------------------------
+        # NORMALIZED RESPONSE
+        # -------------------------------------------------
+
+        normalized = {
+            "status": str(
+                status or "SENT"
+            ).upper(),
+
+            "id": provider_id,
+
+            "cost": cost,
+
+            "segments": segments,
+
+            "raw_response": response_data,
+        }
+
+        print(
+            "[SMS] SMS accepted successfully."
+        )
+
+        print(
+            f"[SMS] Provider ID: {provider_id}"
+        )
+
+        return normalized
