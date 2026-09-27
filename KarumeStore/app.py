@@ -72,6 +72,15 @@ app.config["SECRET_KEY"] = os.environ.get(
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+    "pool_timeout": 30,
+    "connect_args": {
+        "connect_timeout": 10
+    }
+}
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(
