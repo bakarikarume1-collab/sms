@@ -495,21 +495,28 @@ def debug_database():
 
         })
 
+# =========================================================
+# DATABASE INITIALIZATION
+# =========================================================
+
+try:
+
+    create_database()
+
+except Exception as error:
+
+    print("========================================")
+    print("DATABASE INITIALIZATION FAILED")
+    print("========================================")
+    print(error)
+    print("========================================")
+
 
 # =========================================================
 # LOCAL DEVELOPMENT
 # =========================================================
 
 if __name__ == "__main__":
-
-    # Create database automatically
-    # ONLY when running locally with:
-    #
-    # python app.py
-    #
-    # Gunicorn/Render will NOT execute this section.
-
-    create_database()
 
     app.run(
         host="127.0.0.1",
