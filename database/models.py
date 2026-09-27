@@ -1,4 +1,4 @@
-
+import os
 from datetime import datetime
 
 from sqlalchemy import (
@@ -21,11 +21,21 @@ from sqlalchemy.orm import declarative_base
 # DATABASE
 # =========================================================
 
-DATABASE_URL = "sqlite:///karumesms.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///karumesms.db"
+
+DATABASE_URL = DATABASE_URL.replace(
+    "postgres://",
+    "postgresql://",
+    1,
+)
 
 engine = create_engine(
     DATABASE_URL,
     echo=False,
+    pool_pre_ping=True,
 )
 
 
